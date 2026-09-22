@@ -59,6 +59,18 @@ carry most of the identity.
 
 Gustav Iden has a reference photo but is deliberately left off the roster.
 
+## Sponsors shown on the select screen
+
+Checked in September 2026: Sawe races for adidas (he won the 2026 London Marathon in 1:59:30 in
+adidas), Whelan is Australian and signed with Salomon, Osako now wears Li-Ning, Riddle rides for
+Felt, and Laidlow for Canyon. The other triathlon sponsors are read off the reference photos.
+
+- [Sawe, in adidas, runs sub-2 in London (Sportico)](https://www.sportico.com/leagues/other-sports/2026/mens-marathon-world-record-sabastian-sawe-adidas-nike-1234891251/)
+- [Jimmy Whelan, Australian, signed with Salomon (Athleta)](https://athletamag.com/en/transition-running-according-to-jimmy-whelan/)
+- [Osako's Li-Ning shoes at Valencia (Threads)](https://www.threads.com/@jayhan/post/DSRGzyOD-Ro/just-saw-the-li-ning-feidian-elite-the-shoe-that-suguru-osako-worn-for-his)
+- [Jamie Riddle's Felt (Triathlon Magazine)](https://triathlonmagazine.ca/feature/jamie-riddles-ironman-70-3-world-championship-felt-nexar-frd/)
+- [Sam Laidlow's sponsors (samlaidlow.com)](https://samlaidlow.com/en/pages/sponsors)
+
 ## Sources for the 2026 kit changes
 
 - [Alpecin-Premier Tech replaces Alpecin-Deceuninck (Cyclingnews)](https://www.cyclingnews.com/pro-cycling/teams-riders/premier-tech-joins-alpecin-as-title-sponsor-for-mathieu-van-der-poels-team-in-2026-after-leaving-israel-premier-tech/)
