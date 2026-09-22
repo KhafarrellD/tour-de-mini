@@ -182,13 +182,20 @@ const PATTERNS = {
 };
 
 /**
+ * @typedef {object} PaintOptions
+ * @property {boolean} [rear] the chase-camera view, where the torso is the back
+ * @property {boolean} [flash] a white silhouette, for the hit flash on a perfect
+ */
+
+/**
  * Returns the color function for a composed grid.
  * @param {Grid} grid
  * @param {Look} look
- * @param {{ rear?: boolean }} [options]
+ * @param {PaintOptions} [options]
  * @returns {(cell: string, x: number, y: number) => string | null}
  */
-export function colorizer(grid, look, { rear = false } = {}) {
+export function colorizer(grid, look, { rear = false, flash = false } = {}) {
+  if (flash) return () => PALETTE.white;
   let minX = Infinity;
   let maxX = -Infinity;
   let minY = Infinity;
@@ -229,7 +236,7 @@ export function colorizer(grid, look, { rear = false } = {}) {
  * Outlines and paints a composed grid.
  * @param {Grid} grid
  * @param {Look} look
- * @param {{ rear?: boolean }} [options]
+ * @param {PaintOptions} [options]
  * @returns {Sprite}
  */
 function paint(grid, look, options) {
@@ -280,11 +287,13 @@ function place(ctx, sprite, left, bottom) {
  * @param {number} frame
  * @param {number} x
  * @param {number} groundY
+ * @param {{ flash?: boolean }} [options] flash: draw a white silhouette
  */
-export function drawRunner(ctx, athlete, discipline, animation, frame, x, groundY) {
-  const sprite = memo(athlete, `runner|${discipline}|${animation}|${frame % RUNNER.animations[animation].length}`, () => {
+export function drawRunner(ctx, athlete, discipline, animation, frame, x, groundY, { flash = false } = {}) {
+  const index = frame % RUNNER.animations[animation].length;
+  const sprite = memo(athlete, `runner|${discipline}|${animation}|${index}|${flash}`, () => {
     const look = lookFor(athlete, discipline);
-    return paint(composeBody(RUNNER, animation, frame, look), look);
+    return paint(composeBody(RUNNER, animation, index, look), look, { flash });
   });
   place(ctx, sprite, x - RUNNER.width / 2, groundY);
 }

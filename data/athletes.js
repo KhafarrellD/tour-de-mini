@@ -507,6 +507,19 @@ export const ATHLETES = [
   },
 ];
 
+/** Name particles that belong to the surname: van der Poel, van Aert. */
+const PARTICLES = new Set(['van', 'der', 'de', 'den']);
+
+/**
+ * The surname in capitals, for HUDs and results tables.
+ * @param {Athlete} athlete
+ */
+export function shortName(athlete) {
+  const words = athlete.name.split(' ');
+  const first = words.findIndex((word, i) => i > 0 && PARTICLES.has(word));
+  return words.slice(first > 0 ? first : -1).join(' ').toUpperCase();
+}
+
 /**
  * @param {Sport} sport
  * @returns {Athlete[]}

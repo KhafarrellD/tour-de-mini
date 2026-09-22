@@ -4,10 +4,20 @@ A pixel-art sports minigame hub: a Tour de France sprint and descent, a 42.2-sec
 Ironman, featuring 22 real athletes drawn as 16–32px sprites. Built with vanilla JavaScript and the
 Canvas 2D API: no frameworks, no game engine, no build step.
 
-![Title screen: the peloton rolls past the Alps, then Pogačar attacks](docs/media/title.gif)
+![The marathon: the pack runs past the Alps while the player taps the pace bar on the beat](docs/media/marathon.gif)
 
-**Status:** the engine and every athlete sprite are done ([sprite gallery](gallery.html)). The
-games are being built one at a time: Marathon, then Tour de Mini France, then Ironman.
+**Status:** the Marathon is playable, and every athlete sprite is done
+([sprite gallery](gallery.html)). Tour de Mini France and the Ironman are next.
+
+## How to play
+
+Everything is played with one button: **Space**, **Enter**, or a **tap** anywhere.
+
+- **Menus:** tap to move to the next option, hold to select it. A meter fills while you hold.
+- **Marathon:** 42.2 seconds, one per kilometre. A marker sweeps the pace bar once per km. Tap
+  once each km while it crosses the middle: gold is perfect, green is good. Every km becomes a
+  split, and perfect running is worth a sub-two-hour marathon. At the wall (km 30–35) the
+  marker speeds up and the zone shrinks; after it, the beat comes back for the final push.
 
 ## Run it locally
 
@@ -22,23 +32,28 @@ npm run serve        # http://localhost:4173  (any static server works)
 ```sh
 npm test             # unit tests (Node's built-in test runner)
 npm run typecheck    # JSDoc types checked by TypeScript, no compilation
-npx playwright test  # loads every page at 375, 768 and 1440px wide, fails on console
-                     # errors or overflow, and saves screenshots to screenshots/
+npx playwright test  # loads every page at 375, 768 and 1440px wide, walks the hub into a
+                     # race, plays a full marathon, fails on console errors or overflow,
+                     # and saves screenshots to screenshots/
 ```
 
 ## How it works
 
 ```
 index.html, gallery.html   pages (the hub, and a gallery of every sprite)
-pages/                     one small script per page
+pages/                     one small script per page; hub.js wires the scenes together
 engine/                    game-agnostic core, pure where possible
   loop.js                  fixed 60 Hz simulation, rendering on requestAnimationFrame
   screen.js                320x180 buffer, whole-pixel scaling, letterboxing
   input.js                 the single button: Space, Enter or a tap
+  director.js              one scene at a time, with a pixel wipe between them
   grid.js                  pure operations on pixel grids (stamp, outline, shear...)
   character.js             builds athlete sprites from rigs + traits, cached
-  font.js, parallax.js, animation.js, math.js, rng.js
-games/shared/              scenery and UI used by more than one sport
+  font.js, parallax.js, particles.js, animation.js, storage.js, format.js, math.js, rng.js
+games/sports.js            the games the hub offers; adding a sport starts here
+games/hub/                 title, sport select, athlete select, results
+games/marathon/            race.js (the rules, pure) and marathon-scene.js (the drawing)
+games/shared/              timing bar, one-button menu, scenery and UI used by every sport
 assets/                    sprite rigs, font glyphs, palette, scenery painters, CSS
 data/athletes.js           every athlete: name, team, kit, traits, stats
 tests/unit, tests/visual   Node unit tests, Playwright page checks
@@ -53,6 +68,12 @@ A few rules hold everywhere:
   animation is driven by what the athlete is doing: legs follow cadence, wheels follow distance.
 - **One button.** Every game is playable with Space, Enter or a tap. The page never scrolls on
   Space, including when the game is embedded in an iframe.
+- **Rules are pure, scenes only draw.** Each game's rules live in a module with no DOM, like
+  `games/marathon/race.js`, so they are unit-tested directly. That includes balance: the tests
+  play hundreds of races with simulated people whose taps have a normal timing error (45 ms for
+  a sharp player, 100 ms for a casual one), and check that sharp players usually win, casual
+  ones land mid-pack, and mashing finishes last. Timing windows are asserted to stay wide enough
+  for people, not just bots.
 
 ## How sprites are defined
 

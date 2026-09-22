@@ -28,6 +28,44 @@ async function expectNoHorizontalOverflow(page) {
   expect(overflow).toBeLessThanOrEqual(0);
 }
 
+/**
+ * @param {import('@playwright/test').Page} page
+ * @param {string} name
+ */
+async function waitForScene(page, name, timeout = 15000) {
+  await page.waitForFunction((n) => document.getElementById('game')?.dataset.scene === n, name, { timeout });
+}
+
+/** Holds the button long enough to select in a menu. */
+async function hold(/** @type {import('@playwright/test').Page} */ page) {
+  await page.keyboard.down('Space');
+  await page.waitForTimeout(650);
+  await page.keyboard.up('Space');
+}
+
+/**
+ * Plays the marathon like a person keeping a rhythm: one tap per second,
+ * aimed at the middle of each km, with normally distributed timing error
+ * (60 ms). Runs inside the page so browser automation latency doesn't add
+ * to the error. Call as the race starts.
+ * @param {import('@playwright/test').Page} page
+ */
+async function tapOnTheBeat(page) {
+  await page.evaluate(() => {
+    let seed = 7;
+    const random = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    const gaussian = () => Math.sqrt(-2 * Math.log(1 - random())) * Math.cos(2 * Math.PI * random());
+    const start = performance.now();
+    for (let km = 0; km < 43; km++) {
+      const at = (km + 0.5) * 1000 + gaussian() * 60;
+      setTimeout(() => {
+        window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Space' }));
+        setTimeout(() => window.dispatchEvent(new KeyboardEvent('keyup', { code: 'Space' })), 90);
+      }, Math.max(0, at - (performance.now() - start)));
+    }
+  });
+}
+
 for (const viewport of VIEWPORTS) {
   test.describe(`${viewport.name} ${viewport.width}px`, () => {
     test.use({
@@ -35,12 +73,13 @@ for (const viewport of VIEWPORTS) {
       deviceScaleFactor: viewport.deviceScaleFactor,
     });
 
-    test('title screen', async ({ page }) => {
+    test('hub flow into a marathon', async ({ page }) => {
       const errors = collectErrors(page);
       await page.goto('/');
       const canvas = page.locator('canvas.screen');
       await expect(canvas).toBeVisible();
-      await page.waitForTimeout(600);
+      await waitForScene(page, 'title');
+      await page.waitForTimeout(500);
       await expectNoHorizontalOverflow(page);
 
       // The canvas backing store is an exact multiple of 320x180 and fits the viewport.
@@ -54,15 +93,29 @@ for (const viewport of VIEWPORTS) {
       expect(size.width / 320).toBe(size.height / 180);
       expect(size.right).toBeLessThanOrEqual(viewport.width);
       expect(size.bottom).toBeLessThanOrEqual(viewport.height);
-      await page.screenshot({ path: `screenshots/title-${viewport.width}.png` });
+      await page.screenshot({ path: `screenshots/${viewport.width}-1-title.png` });
 
-      // Hold the button: the leader attacks, easing ahead with speed lines.
-      await page.keyboard.down('Space');
-      await page.waitForTimeout(900);
-      await page.screenshot({ path: `screenshots/title-${viewport.width}-attack.png` });
-      await page.keyboard.up('Space');
-      const scrolled = await page.evaluate(() => window.scrollY);
-      expect(scrolled).toBe(0);
+      await page.keyboard.press('Space');
+      await waitForScene(page, 'sport-select');
+      await page.waitForTimeout(500);
+      await page.screenshot({ path: `screenshots/${viewport.width}-2-sport.png` });
+
+      await page.keyboard.press('Space');
+      await waitForScene(page, 'athlete-select');
+      await page.keyboard.press('Space');
+      await page.waitForTimeout(500);
+      await page.screenshot({ path: `screenshots/${viewport.width}-3-athlete.png` });
+
+      await hold(page);
+      await waitForScene(page, 'marathon-countdown');
+      await page.waitForTimeout(1000);
+      await page.screenshot({ path: `screenshots/${viewport.width}-4-countdown.png` });
+
+      await waitForScene(page, 'marathon-racing');
+      await tapOnTheBeat(page);
+      await page.waitForTimeout(6600);
+      await page.screenshot({ path: `screenshots/${viewport.width}-5-racing.png` });
+      expect(await page.evaluate(() => window.scrollY)).toBe(0);
       expect(errors).toEqual([]);
     });
 
@@ -99,5 +152,33 @@ test('inside an iframe, Space plays the game without scrolling the parent page',
   expect(size.width % 320).toBe(0);
   expect(size.width / 320).toBe(size.height / 180);
   await page.screenshot({ path: 'screenshots/embed-iframe.png' });
+  expect(errors).toEqual([]);
+});
+
+test('a full marathon played on the beat reaches the results screen', async ({ page }) => {
+  test.setTimeout(120_000);
+  const errors = collectErrors(page);
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.goto('/');
+  await waitForScene(page, 'title');
+  await page.keyboard.press('Space');
+  await waitForScene(page, 'sport-select');
+  await page.keyboard.press('Space');
+  await waitForScene(page, 'athlete-select');
+  await hold(page);
+  await waitForScene(page, 'marathon-racing');
+  await tapOnTheBeat(page);
+  const shots = /** @type {const} */ ([
+    [31.5, 'wall'],
+    [40.8, 'final-push'],
+  ]);
+  const start = Date.now();
+  for (const [seconds, name] of shots) {
+    await page.waitForTimeout(Math.max(0, seconds * 1000 - (Date.now() - start)));
+    await page.screenshot({ path: `screenshots/race-${name}.png` });
+  }
+  await waitForScene(page, 'results', 20_000);
+  await page.waitForTimeout(800);
+  await page.screenshot({ path: 'screenshots/race-results.png' });
   expect(errors).toEqual([]);
 });

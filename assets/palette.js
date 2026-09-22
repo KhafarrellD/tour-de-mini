@@ -74,6 +74,10 @@ export const PALETTE = {
   spoke: '#8f95a3',
   metal: '#c4c8d2',
 
+  // Interface
+  panel: '#251d33',
+  panelEdge: '#4a3b66',
+
   // Scenery
   skyHigh: '#6cb9ec',
   skyMid: '#8fd0f4',

@@ -121,3 +121,11 @@ test('bikes get headwear for the discipline, runners without any stay bare-heade
   assert.ok(lookFor(triathlete, 'bike').headParts.some((part) => part.rows.join('').includes('M')));
   assert.ok(!lookFor(triathlete, 'run').headParts.some((part) => part.rows.join('').includes('M')));
 });
+
+test('the hit flash paints the whole body white', () => {
+  const look = lookFor(athlete({ sport: 'marathon' }), 'run');
+  const paint = colorizer(gridFromRows(['TSH']), look, { flash: true });
+  assert.equal(paint('T', 0, 0), PALETTE.white);
+  assert.equal(paint('S', 1, 0), PALETTE.white);
+  assert.equal(paint('H', 2, 0), PALETTE.white);
+});

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ATHLETES, athletesFor } from '../../data/athletes.js';
+import { ATHLETES, athletesFor, shortName } from '../../data/athletes.js';
 import { PALETTE } from '../../assets/palette.js';
 import { HAIR, FACIAL_HAIR, HEADWEAR, TRAITS } from '../../assets/sprites/heads.js';
 
@@ -66,3 +66,11 @@ for (const athlete of ATHLETES) {
     for (const value of Object.values(athlete.stats)) assert.ok(value >= 1 && value <= 10);
   });
 }
+
+test('short names keep Dutch and Belgian particles', () => {
+  const byId = (/** @type {string} */ id) => /** @type {import('../../data/athletes.js').Athlete} */ (ATHLETES.find((a) => a.id === id));
+  assert.equal(shortName(byId('vanderpoel')), 'VAN DER POEL');
+  assert.equal(shortName(byId('vanaert')), 'VAN AERT');
+  assert.equal(shortName(byId('pogacar')), 'POGAČAR');
+  assert.equal(shortName(byId('kipchoge')), 'KIPCHOGE');
+});
