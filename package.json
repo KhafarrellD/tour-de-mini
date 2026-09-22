@@ -1,0 +1,19 @@
+{
+  "name": "tour-de-mini",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Pixel-art sports minigame hub in vanilla JavaScript and Canvas 2D",
+  "type": "module",
+  "scripts": {
+    "serve": "node scripts/serve.js",
+    "test": "node --test \"tests/unit/**/*.test.js\"",
+    "typecheck": "tsc -p .",
+    "test:visual": "playwright test",
+    "check": "npm run typecheck && npm test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.0"
+  }
+}
