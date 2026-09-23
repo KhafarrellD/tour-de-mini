@@ -52,11 +52,19 @@ body {
   transform: translateX(-50%);
 }
 
-.sound-toggle {
+.frame-controls {
   display: none;
   position: absolute;
   top: max(8px, env(safe-area-inset-top));
   right: max(8px, env(safe-area-inset-right));
+  gap: 6px;
+}
+
+.game.menus .frame-controls {
+  display: flex;
+}
+
+.frame-button {
   padding: 4px;
   border: 0;
   border-radius: 4px;
@@ -66,14 +74,10 @@ body {
   touch-action: manipulation;
 }
 
-.game.menus .sound-toggle {
-  display: block;
-}
-
-.sound-toggle canvas {
+.frame-button canvas {
   image-rendering: pixelated;
 }
 
-.sound-toggle:focus-visible {
+.frame-button:focus-visible {
   outline: 2px solid #f2c94c;
 }

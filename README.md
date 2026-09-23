@@ -12,8 +12,9 @@ and a mobile pass ([play it](https://khafarrelld.github.io/tour-de-mini/),
 
 ## How to play
 
-Everything is played with one button: **Space**, **Enter**, or a **tap** anywhere. Sound starts off:
-the speaker in the corner turns it on, or press **M**.
+Everything is played with one button: **Space**, **Enter**, or a **tap** anywhere. Two switches sit in
+the corner of the menus: sound, which starts off (or press **M**), and fullscreen (or press **F**).
+Both keys work mid-race, where the corner belongs to the HUD.
 
 - **Menus:** tap to move to the next option, hold to select it. A meter fills while you hold.
 - **Marathon:** 42.2 seconds, one per kilometre. A marker sweeps the pace bar once per km. Tap
@@ -66,6 +67,7 @@ engine/                    game-agnostic core, pure where possible
   screen.js                320x180 buffer, whole-pixel scaling, letterboxing
   input.js                 the single button: Space, Enter or a tap
   audio.js                 chiptune synth: sounds written as notes, muted by default
+  fullscreen.js            fullscreen in both spellings the web has for it
   director.js              one scene at a time, with a pixel wipe between them
   grid.js                  pure operations on pixel grids (stamp, outline, shear...)
   character.js             builds athlete sprites from rigs + traits, cached
@@ -98,6 +100,9 @@ A few rules hold everywhere:
 - **Sound is synthesised, not loaded.** There are no audio files: `engine/audio.js` writes each
   effect as notes and turns them into oscillators, so the whole soundtrack costs no bytes. It
   starts muted, and no audio clock is created at all until someone turns it on.
+- **Bigger is whole pixels.** Fullscreen is worth taking: the frame scales by whole pixels, so
+  filling the screen takes a laptop from four device pixels per game pixel to six or more. It
+  works from inside an embed too, so the game can fill the screen from a page that hosts it.
 - **A phone held upright turns the picture, not the game.** Upright, a phone can only fit a small
   16:9 frame; drawn sideways it fills the long side of the screen, which doubles every pixel.
   The game itself is unchanged — the player just turns the phone, which works even with rotation

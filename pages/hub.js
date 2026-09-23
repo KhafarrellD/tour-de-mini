@@ -17,6 +17,7 @@ import { createResultsScene } from '../games/hub/results-scene.js';
 import { mountRotateHint } from '../games/shared/rotate-hint.js';
 import { createAudio, useAudio } from '../engine/audio.js';
 import { mountSoundToggle } from '../games/shared/sound-toggle.js';
+import { mountFullscreenToggle } from '../games/shared/fullscreen-toggle.js';
 import { keepFresh } from './offline.js';
 
 /** @typedef {import('../games/sports.js').Sport} Sport */
@@ -33,7 +34,12 @@ const scores = createBestScores();
 // Sound is off until the switch in the corner is pressed.
 const audio = createAudio();
 useAudio(audio);
-mountSoundToggle(container, audio);
+// The switches share a corner of the frame, outside the picture.
+const controls = document.createElement('div');
+controls.className = 'frame-controls';
+container.append(controls);
+mountFullscreenToggle(controls, container);
+mountSoundToggle(controls, audio);
 
 /**
  * Music plays over the menus and stops for a race, so the only thing you

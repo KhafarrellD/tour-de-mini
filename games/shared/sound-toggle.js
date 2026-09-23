@@ -14,18 +14,18 @@ const SCALE = 3;
 const SIZE = 11;
 
 /**
- * @param {HTMLElement} container
+ * @param {HTMLElement} bar where the control sits
  * @param {ReturnType<typeof import('../../engine/audio.js').createAudio>} audio
  */
-export function mountSoundToggle(container, audio) {
+export function mountSoundToggle(bar, audio) {
   const button = document.createElement('button');
-  button.className = 'sound-toggle';
+  button.className = 'frame-button sound-toggle';
   button.type = 'button';
   const { canvas, ctx } = createPixelCanvas(SIZE, SIZE);
   canvas.style.width = `${SIZE * SCALE}px`;
   canvas.style.height = `${SIZE * SCALE}px`;
   button.append(canvas);
-  container.append(button);
+  bar.append(button);
 
   function paint() {
     const on = !audio.muted;

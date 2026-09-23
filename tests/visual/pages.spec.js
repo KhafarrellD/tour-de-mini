@@ -541,3 +541,56 @@ test('the sound switch keeps out of the HUD: menus only, but M works anywhere', 
   await expect(toggle).toHaveAttribute('aria-pressed', 'false');
   expect(errors).toEqual([]);
 });
+
+test('the game can fill the screen, and comes back out again', async ({ page }) => {
+  test.setTimeout(90_000);
+  const errors = collectErrors(page);
+  await page.goto('/');
+  await waitForScene(page, 'title');
+  const button = page.locator('.fullscreen-toggle');
+  await expect(button).toBeVisible();
+  await expect(button).toHaveAttribute('aria-pressed', 'false');
+
+  const inFullscreen = () => page.evaluate(() => document.fullscreenElement !== null);
+  const scaleOf = () =>
+    page.locator('canvas.screen').evaluate((node) => /** @type {HTMLCanvasElement} */ (node).width / 320);
+
+  const windowed = await scaleOf();
+  await button.click();
+  await expect(button).toHaveAttribute('aria-pressed', 'true');
+  expect(await inFullscreen()).toBe(true);
+  // Filling the screen is worth whole pixels: the picture gets bigger.
+  expect(await scaleOf()).toBeGreaterThanOrEqual(windowed);
+  expect((await scaleOf()) % 1).toBe(0);
+
+  // F comes back out, and the button follows.
+  await page.keyboard.press('KeyF');
+  await expect(button).toHaveAttribute('aria-pressed', 'false');
+  expect(await inFullscreen()).toBe(false);
+  expect(await scaleOf()).toBe(windowed);
+  expect(errors).toEqual([]);
+});
+
+test('fullscreen works from inside an embed, as the portfolio uses it', async ({ page }) => {
+  test.setTimeout(90_000);
+  const errors = collectErrors(page);
+  await page.goto('/tests/visual/fixtures/embed.html');
+  const frame = page.frameLocator('iframe');
+  await frame.locator('canvas.screen').click();
+  const button = frame.locator('.fullscreen-toggle');
+  await expect(button).toBeVisible();
+  await button.click();
+  // Entering takes a moment, so wait on the control before reading the page.
+  await expect(button).toHaveAttribute('aria-pressed', 'true');
+  // The embedding page puts the frame itself fullscreen, with the game in it.
+  expect(await page.evaluate(() => document.fullscreenElement?.tagName ?? null)).toBe('IFRAME');
+  // The frame is bigger than the 640x360 it was given in the page.
+  const size = await frame.locator('canvas.screen').evaluate((node) => /** @type {HTMLCanvasElement} */ (node).width);
+  expect(size).toBeGreaterThan(640);
+  // Escape is the browser's own way out and is not ours to test; the game's
+  // control has to work from inside the embed too.
+  await button.click();
+  await expect(button).toHaveAttribute('aria-pressed', 'false');
+  expect(await page.evaluate(() => document.fullscreenElement)).toBe(null);
+  expect(errors).toEqual([]);
+});
