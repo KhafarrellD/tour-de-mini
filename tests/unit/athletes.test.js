@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { ATHLETES, athletesFor, shortName } from '../../data/athletes.js';
 import { PALETTE } from '../../assets/palette.js';
 import { HAIR, FACIAL_HAIR, HEADWEAR, TRAITS } from '../../assets/sprites/heads.js';
+import { wrapText, measureText } from '../../engine/font.js';
+import { BIO_WIDTH } from '../../games/hub/athlete-select-scene.js';
 
 /** @param {string} name */
 const isColor = (name) => Object.hasOwn(PALETTE, name);
@@ -73,4 +75,14 @@ test('short names keep Dutch and Belgian particles', () => {
   assert.equal(shortName(byId('vanaert')), 'VAN AERT');
   assert.equal(shortName(byId('pogacar')), 'POGAČAR');
   assert.equal(shortName(byId('kipchoge')), 'KIPCHOGE');
+});
+
+test('every athlete has a look and a bio that fit the select panel', () => {
+  for (const athlete of ATHLETES) {
+    assert.ok(athlete.look.length > 0, `${athlete.name} has no look`);
+    assert.ok(athlete.bio.length > 0, `${athlete.name} has no bio`);
+    const lines = wrapText(athlete.bio, BIO_WIDTH);
+    assert.ok(lines.length <= 4, `${athlete.name}: bio needs ${lines.length} lines`);
+    for (const line of lines) assert.ok(measureText(line) <= BIO_WIDTH, `${athlete.name}: "${line}" is too wide`);
+  }
 });

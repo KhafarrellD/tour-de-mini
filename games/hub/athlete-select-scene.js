@@ -15,6 +15,9 @@ import { PALETTE } from '../../assets/palette.js';
 
 const BUILDS = { compact: 'COMPACT', regular: 'REGULAR', tall: 'TALL' };
 
+/** Width available for an athlete's bio in the info panel, in game pixels. */
+export const BIO_WIDTH = 164;
+
 /**
  * @param {{ sport: Sport, athletes: readonly Athlete[], startId?: string, onPick: (athlete: Athlete) => void }} options
  * @returns {import('../../engine/director.js').Scene}
@@ -37,10 +40,10 @@ export function createAthleteSelectScene({ sport, athletes, startId, onPick }) {
       drawText(ctx, `CHOOSE YOUR ${sport.athleteNoun}`, 160, 6, { align: 'center', color: PALETTE.yellow });
 
       const athlete = athletes[menu.index];
-      drawPanel(ctx, 8, 18, 304, 76);
+      drawPanel(ctx, 8, 18, 304, 78);
       drawText(ctx, athlete.name, 14, 24, { scale: 2 });
       drawText(ctx, `${athlete.country} - ${athlete.team}`, 14, 43, { color: PALETTE.lightGrey });
-      wrapText(athlete.signature, 164).forEach((line, row) => {
+      wrapText(athlete.bio, BIO_WIDTH).forEach((line, row) => {
         drawText(ctx, line, 14, 56 + row * LINE_HEIGHT, { color: PALETTE.yellow });
       });
       drawStatBar(ctx, 194, 26, 'POWER', athlete.stats.power);

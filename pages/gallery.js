@@ -245,7 +245,7 @@ function athleteCard(athlete) {
       textCanvas(athlete.name, { scale: 2 }),
       textCanvas(`${athlete.country} - ${athlete.team}`, { color: PALETTE.lightGrey }),
     ],
-    [textCanvas(athlete.signature, { color: PALETTE.yellow, maxWidth: 150 })],
+    [textCanvas(athlete.look, { color: PALETTE.yellow, maxWidth: 150 })],
   );
 }
 

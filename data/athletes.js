@@ -48,7 +48,8 @@
  * @property {{ frame: string }} [bike]
  * @property {string} [swimCap]
  * @property {string[]} traits signature head details from assets/sprites/heads.js
- * @property {string} signature one line on what makes them recognizable
+ * @property {string} look one line on what makes them recognizable on screen
+ * @property {string} bio one line on who they are, shown when you pick them
  * @property {{ power: number, endurance: number, technique: number }} stats 1-10
  */
 
@@ -103,7 +104,8 @@ export const ATHLETES = [
     kit: { ...CYCLING_KIT, top: 'white', accent: 'black', pattern: 'lower', cuffs: 'rainbow' },
     bike: { frame: 'white' },
     traits: ['tuft'],
-    signature: 'Hair tuft poking out of his helmet and rainbow cuffs',
+    look: 'Hair tuft poking out of his helmet and rainbow cuffs',
+    bio: 'Attacks from 100 km out and wins anyway. Five Tours and he is not done.',
     stats: { power: 9, endurance: 10, technique: 9 },
   },
   {
@@ -121,7 +123,8 @@ export const ATHLETES = [
     kit: { ...CYCLING_KIT, top: 'blue', accent: 'navy', pattern: 'lower', sleeves: 'blue', cuffs: 'rainbow', shorts: 'navy' },
     bike: { frame: 'navy' },
     traits: [],
-    signature: 'Tall with long legs, rainbow cuffs',
+    look: 'Tall with long legs, rainbow cuffs',
+    bio: 'Grandson of Poulidor, son of a pro. The family business is suffering.',
     stats: { power: 10, endurance: 8, technique: 9 },
   },
   {
@@ -139,7 +142,8 @@ export const ATHLETES = [
     kit: { ...CYCLING_KIT, top: 'white', accent: 'blue', pattern: 'plain', sleeves: 'blue', cuffs: 'rainbow', shorts: 'navy' },
     bike: { frame: 'blue' },
     traits: [],
-    signature: 'Compact build, white kit with bright blue sleeves, rainbow cuffs',
+    look: 'Compact build, white kit with bright blue sleeves, rainbow cuffs',
+    bio: 'The little Belgian rocket. Was going to be a footballer, now he hurts everyone against the clock.',
     stats: { power: 8, endurance: 9, technique: 8 },
   },
   {
@@ -157,7 +161,8 @@ export const ATHLETES = [
     kit: { ...CYCLING_KIT, top: 'yellow', accent: 'black', pattern: 'lower', sleeves: 'yellow' },
     bike: { frame: 'yellow' },
     traits: [],
-    signature: 'The tallest rider, yellow kit fading to black',
+    look: 'The tallest rider, yellow kit fading to black',
+    bio: 'Huge engine, huge legs, huge everything. Wins the sprint, then says he was not at his best.',
     stats: { power: 10, endurance: 8, technique: 8 },
   },
   {
@@ -175,7 +180,8 @@ export const ATHLETES = [
     kit: { ...CYCLING_KIT, top: 'navy', accent: 'gold', pattern: 'band', sleeves: 'navy', shorts: 'navy' },
     bike: { frame: 'gold' },
     traits: [],
-    signature: 'The smallest rider, navy kit with a gold band',
+    look: 'The smallest rider, navy kit with a gold band',
+    bio: 'Smallest guy in the race and the fastest downhill. Brakes are optional.',
     stats: { power: 8, endurance: 7, technique: 10 },
   },
   {
@@ -193,7 +199,8 @@ export const ATHLETES = [
     kit: { ...CYCLING_KIT, top: 'pink', accent: 'purple', pattern: 'shoulders', sleeves: 'pink', shorts: 'purple' },
     bike: { frame: 'pink' },
     traits: [],
-    signature: 'All pink, helmet included',
+    look: 'All pink, helmet included',
+    bio: 'The locomotive from Ecuador. Climbs like the air is thinner for everyone else.',
     stats: { power: 7, endurance: 9, technique: 8 },
   },
   {
@@ -211,7 +218,8 @@ export const ATHLETES = [
     kit: { ...CYCLING_KIT, top: 'yellow', accent: 'black', pattern: 'lower', sleeves: 'yellow' },
     bike: { frame: 'yellow' },
     traits: [],
-    signature: 'Slimmer and shorter than his teammate van Aert',
+    look: 'Slimmer and shorter than his teammate van Aert',
+    bio: 'Quiet, skinny, merciless on a climb. Packed fish for a living before this.',
     stats: { power: 7, endurance: 10, technique: 8 },
   },
 
@@ -230,7 +238,8 @@ export const ATHLETES = [
     headwear: {},
     kit: { ...RUNNING_KIT, top: 'coral', legs: 'tights' },
     traits: [],
-    signature: 'Coral singlet and black half-tights',
+    look: 'Coral singlet and black half-tights',
+    bio: 'The upcoming GOAT. First man under two hours in a real race.',
     stats: { power: 9, endurance: 10, technique: 8 },
   },
   {
@@ -247,7 +256,8 @@ export const ATHLETES = [
     headwear: {},
     kit: { ...RUNNING_KIT, top: 'lavender', shorts: 'purple' },
     traits: [],
-    signature: 'Tall, curly hair and a short beard',
+    look: 'Tall, curly hair and a short beard',
+    bio: 'A very tall skeleton who will come for you. Sub-two on his debut. Insane.',
     stats: { power: 10, endurance: 8, technique: 8 },
   },
   {
@@ -264,7 +274,8 @@ export const ATHLETES = [
     headwear: {},
     kit: { ...RUNNING_KIT, top: 'white', accent: 'orange', pattern: 'split', armSleeves: 'white', shoes: 'volt' },
     traits: [],
-    signature: 'White arm sleeves and a half-orange singlet',
+    look: 'White arm sleeves and a half-orange singlet',
+    bio: 'The man, the myth, the legend.',
     stats: { power: 8, endurance: 10, technique: 10 },
   },
   {
@@ -281,7 +292,8 @@ export const ATHLETES = [
     headwear: {},
     kit: { ...RUNNING_KIT, top: 'orange', accent: 'yellow', pattern: 'band', shorts: 'navy' },
     traits: [],
-    signature: 'Mullet, moustache and dark sunglasses',
+    look: 'Mullet, moustache and dark sunglasses',
+    bio: 'It is all the mullet and the moustache. Without them he is nothing.',
     stats: { power: 7, endurance: 8, technique: 7 },
   },
   {
@@ -298,7 +310,8 @@ export const ATHLETES = [
     headwear: {},
     kit: { ...RUNNING_KIT, top: 'white', accent: 'red', pattern: 'logo', legs: 'tights' },
     traits: [],
-    signature: 'Salomon skinsuit: white top, black tights, red logo',
+    look: 'Salomon skinsuit: white top, black tights, red logo',
+    bio: 'The only one who went from cycling to running and not the other way. Looks like he is trying to injure himself.',
     stats: { power: 7, endurance: 8, technique: 8 },
   },
   {
@@ -315,7 +328,8 @@ export const ATHLETES = [
     headwear: {},
     kit: { ...RUNNING_KIT, top: 'blue', accent: 'sky', pattern: 'band', shorts: 'blue', shoes: 'volt' },
     traits: [],
-    signature: 'Blond hair and an all-blue kit',
+    look: 'Blond hair and an all-blue kit',
+    bio: 'American record holder in the marathon and the half. Quietly very fast.',
     stats: { power: 8, endurance: 9, technique: 8 },
   },
   {
@@ -332,7 +346,8 @@ export const ATHLETES = [
     headwear: { run: { type: 'cap', color: 'black' } },
     kit: { ...RUNNING_KIT, top: 'white', accent: 'black', pattern: 'side' },
     traits: [],
-    signature: 'Black cap and a white singlet with black side panels',
+    look: 'Black cap and a white singlet with black side panels',
+    bio: 'The most aesthetic Asian runner in the sport. Every stride looks photoshopped.',
     stats: { power: 7, endurance: 9, technique: 9 },
   },
   {
@@ -349,7 +364,8 @@ export const ATHLETES = [
     headwear: {},
     kit: { ...RUNNING_KIT, top: 'white', accent: 'sky', pattern: 'band', shorts: 'navy', shoes: 'red' },
     traits: [],
-    signature: 'Blond, tall, orange-red shoes',
+    look: 'Blond, tall, orange-red shoes',
+    bio: 'A potential future GOAT. What a man.',
     stats: { power: 9, endurance: 8, technique: 7 },
   },
 
@@ -373,7 +389,8 @@ export const ATHLETES = [
     bike: { frame: 'navy' },
     swimCap: 'red',
     traits: [],
-    signature: 'Stocky build and a white cap worn backwards',
+    look: 'Stocky build and a white cap worn backwards',
+    bio: 'Built like a bowling ball, finishes like a missile. Olympic champion who never blows up.',
     stats: { power: 10, endurance: 9, technique: 7 },
   },
   {
@@ -395,7 +412,8 @@ export const ATHLETES = [
     bike: { frame: 'black' },
     swimCap: 'green',
     traits: [],
-    signature: 'Green suit and a black visor',
+    look: 'Green suit and a black visor',
+    bio: 'Came from mountain bikes and never calmed down. The green suit is a warning.',
     stats: { power: 10, endurance: 8, technique: 8 },
   },
   {
@@ -417,7 +435,8 @@ export const ATHLETES = [
     bike: { frame: 'lightGrey' },
     swimCap: 'white',
     traits: [],
-    signature: 'Grey suit, white cap, mirrored glasses',
+    look: 'Grey suit, white cap, mirrored glasses',
+    bio: 'One third of the Norwegian podium sweep that broke triathlon.',
     stats: { power: 8, endurance: 9, technique: 8 },
   },
   {
@@ -439,7 +458,8 @@ export const ATHLETES = [
     bike: { frame: 'black' },
     swimCap: 'yellow',
     traits: ['tricolorVisor'],
-    signature: 'Black-yellow-red Belgian visor',
+    look: 'Black-yellow-red Belgian visor',
+    bio: 'Belgian speed. Runs the last 10 km like somebody told him it was a 5 km.',
     stats: { power: 8, endurance: 9, technique: 9 },
   },
   {
@@ -461,7 +481,8 @@ export const ATHLETES = [
     bike: { frame: 'navy' },
     swimCap: 'pink',
     traits: [],
-    signature: 'Blond hair and a pink headband',
+    look: 'Blond hair and a pink headband',
+    bio: 'Pink headband, German engineering, no fear in the washing machine of a swim start.',
     stats: { power: 8, endurance: 8, technique: 9 },
   },
   {
@@ -480,7 +501,8 @@ export const ATHLETES = [
     bike: { frame: 'green' },
     swimCap: 'orange',
     traits: [],
-    signature: 'Green-and-yellow shoulders and white calf sleeves',
+    look: 'Green-and-yellow shoulders and white calf sleeves',
+    bio: 'South African who is always at the front before the running even starts.',
     stats: { power: 7, endurance: 9, technique: 8 },
   },
   {
@@ -502,7 +524,8 @@ export const ATHLETES = [
     bike: { frame: 'blue' },
     swimCap: 'blue',
     traits: [],
-    signature: 'Beard, backwards cap and an unzipped suit',
+    look: 'Beard, backwards cap and an unzipped suit',
+    bio: 'Holds the Kona bike record and took a world title nobody saw coming. Beard included.',
     stats: { power: 9, endurance: 8, technique: 7 },
   },
 ];

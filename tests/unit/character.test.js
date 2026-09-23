@@ -34,7 +34,8 @@ function athlete(overrides = {}) {
       shoes: 'volt',
     },
     traits: [],
-    signature: '',
+    look: '',
+    bio: '',
     stats: { power: 5, endurance: 5, technique: 5 },
     ...overrides,
   };
