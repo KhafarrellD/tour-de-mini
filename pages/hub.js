@@ -42,6 +42,9 @@ mountSoundToggle(container, audio);
  */
 const music = (on) => audio.music(on);
 
+/** The screens with room for a switch in the corner. */
+const MENUS = new Set(['title', 'sport-select', 'athlete-select', 'results']);
+
 const director = createDirector(createTitleScene({ onStart: () => director.go(sportSelect()) }));
 music(true);
 
@@ -119,7 +122,12 @@ startLoop({
   update(dt) {
     audio.update();
     director.update(dt, button.poll());
-    if (container.dataset.scene !== director.name) container.dataset.scene = director.name;
+    if (container.dataset.scene !== director.name) {
+      container.dataset.scene = director.name;
+      // The sound switch lives in the menus: during a race that corner of
+      // the frame belongs to the HUD. M still works wherever you are.
+      container.classList.toggle('menus', MENUS.has(director.name));
+    }
   },
   render() {
     director.render(screen.ctx);

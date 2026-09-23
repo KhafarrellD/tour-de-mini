@@ -53,6 +53,7 @@ body {
 }
 
 .sound-toggle {
+  display: none;
   position: absolute;
   top: max(8px, env(safe-area-inset-top));
   right: max(8px, env(safe-area-inset-right));
@@ -63,6 +64,10 @@ body {
   line-height: 0;
   cursor: pointer;
   touch-action: manipulation;
+}
+
+.game.menus .sound-toggle {
+  display: block;
 }
 
 .sound-toggle canvas {

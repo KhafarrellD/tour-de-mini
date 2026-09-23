@@ -519,3 +519,25 @@ test('a deploy is never stale, and a second visit works offline', async ({ page,
   await context.setOffline(false);
   expect(errors).toEqual([]);
 });
+
+test('the sound switch keeps out of the HUD: menus only, but M works anywhere', async ({ page }) => {
+  test.setTimeout(90_000);
+  const errors = collectErrors(page);
+  await page.goto('/');
+  await waitForScene(page, 'title');
+  const toggle = page.locator('.sound-toggle');
+  await expect(toggle).toBeVisible();
+
+  await startSport(page, 0);
+  await waitForScene(page, 'marathon-countdown', 20_000);
+  // Racing: the corner belongs to the distance and the clock.
+  await expect(toggle).toBeHidden();
+  await waitForScene(page, 'marathon-racing', 20_000);
+  await expect(toggle).toBeHidden();
+  // The key still works while hidden.
+  await page.keyboard.press('KeyM');
+  await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+  await page.keyboard.press('KeyM');
+  await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+  expect(errors).toEqual([]);
+});
