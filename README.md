@@ -6,8 +6,9 @@ Canvas 2D API: no frameworks, no game engine, no build step.
 
 ![The marathon: the pack runs past the Alps while the player taps the pace bar on the beat](docs/media/marathon.gif)
 
-**Status:** the Marathon is playable, and every athlete sprite is done
-([sprite gallery](gallery.html)). Tour de Mini France and the Ironman are next.
+**Status:** three events are playable — the Marathon, the Tour sprint and the
+descent — and every athlete sprite is done ([sprite gallery](gallery.html)).
+The Ironman is next.
 
 ## How to play
 
@@ -18,6 +19,13 @@ Everything is played with one button: **Space**, **Enter**, or a **tap** anywher
   once each km while it crosses the middle: gold is perfect, green is good. Every km becomes a
   split, and perfect running is worth a sub-two-hour marathon. At the wall (km 30–35) the
   marker speeds up and the zone shrinks; after it, the beat comes back for the final push.
+- **Tour sprint:** the last 2 km. Tap to turn the pedals: faster tapping means more speed, but
+  high cadence burns the legs, so flat-out tapping empties you before the line. Sitting in a
+  rival's wheel costs far less, and the bar at 500, 200 and 100 m to go is your attack: hit the
+  green for a jump, the gold middle for a big one.
+- **The descent:** switchbacks off the mountain, seen from behind the rider. Hold the button to
+  brake, release to let the bike run. Every corner is signed with its safe speed and the gauge
+  shows whether you are inside it: a little over and you wobble, far over and you crash.
 
 ## Run it locally
 
@@ -53,6 +61,8 @@ engine/                    game-agnostic core, pure where possible
 games/sports.js            the games the hub offers; adding a sport starts here
 games/hub/                 title, sport select, athlete select, results
 games/marathon/            race.js (the rules, pure) and marathon-scene.js (the drawing)
+games/cycling/             sprint.js and descent.js (the rules), their scenes, and
+                           road-view.js, the chase camera that draws a road per screen row
 games/shared/              timing bar, one-button menu, scenery and UI used by every sport
 assets/                    sprite rigs, font glyphs, palette, scenery painters, CSS
 data/athletes.js           every athlete: name, team, kit, traits, stats

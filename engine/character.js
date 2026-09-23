@@ -387,13 +387,14 @@ export function drawBike(ctx, athlete, wheelFrame, x, groundY) {
  * @param {number} wheelFrame tied to road speed
  * @param {number} x
  * @param {number} groundY
+ * @param {{ flash?: boolean }} [options] flash: draw the rider as a white silhouette
  */
-export function drawRider(ctx, athlete, discipline, animation, frame, wheelFrame, x, groundY) {
+export function drawRider(ctx, athlete, discipline, animation, frame, wheelFrame, x, groundY, { flash = false } = {}) {
   const index = frame % RIDER.animations[animation].length;
-  const layers = memo(athlete, `rider|${discipline}|${animation}|${index}`, () => {
+  const layers = memo(athlete, `rider|${discipline}|${animation}|${index}|${flash}`, () => {
     const look = lookFor(athlete, discipline);
     const { far, near } = splitLayers(composeBody(RIDER, animation, index, look));
-    return { far: paint(far, look), near: paint(near, look) };
+    return { far: paint(far, look, { flash }), near: paint(near, look, { flash }) };
   });
   const left = Math.round(x - BIKE.width / 2);
   const bottom = Math.round(groundY);

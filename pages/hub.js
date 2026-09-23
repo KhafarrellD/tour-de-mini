@@ -8,6 +8,7 @@ import { createButton, bindButton } from '../engine/input.js';
 import { createDirector } from '../engine/director.js';
 import { createBestScores } from '../engine/storage.js';
 import { athletesFor } from '../data/athletes.js';
+import { createRng } from '../engine/rng.js';
 import { SPORTS } from '../games/sports.js';
 import { createTitleScene } from '../games/hub/title-scene.js';
 import { createSportSelectScene } from '../games/hub/sport-select-scene.js';
@@ -38,7 +39,7 @@ function sportSelect() {
 function athleteSelect(sport, startId) {
   return createAthleteSelectScene({
     sport,
-    athletes: athletesFor(sport.id),
+    athletes: athletesFor(sport.roster),
     startId,
     onPick: (athlete) => director.go(race(sport, athlete)),
   });
@@ -49,18 +50,19 @@ function athleteSelect(sport, startId) {
  * @param {Athlete} athlete
  */
 function race(sport, athlete) {
+  const seed = Date.now() % 2147483647;
   return sport.createScene({
     athlete,
-    rivals: athletesFor(sport.id).filter((rival) => rival !== athlete),
-    seed: Date.now() % 2147483647,
+    rivals: pickRivals(sport, athlete, seed),
+    seed,
     onFinish: (outcome) => {
-      const newBest = scores.submit(sport.id, { time: outcome.time, athleteId: athlete.id });
+      const newBest = scores.submit(sport.key, { time: outcome.time, athleteId: athlete.id });
       director.go(
         createResultsScene({
           sport,
           athlete,
           outcome,
-          best: scores.get(sport.id),
+          best: scores.get(sport.key),
           newBest,
           onRaceAgain: () => director.go(race(sport, athlete)),
           onNewAthlete: () => director.go(athleteSelect(sport, athlete.id)),
@@ -69,6 +71,23 @@ function race(sport, athlete) {
       );
     },
   });
+}
+
+/**
+ * Everyone else on the roster, or a seeded handful when the sport races a
+ * small field.
+ * @param {Sport} sport
+ * @param {Athlete} athlete
+ * @param {number} seed
+ */
+function pickRivals(sport, athlete, seed) {
+  const others = athletesFor(sport.roster).filter((rival) => rival !== athlete);
+  if (!sport.rivalCount || sport.rivalCount >= others.length) return others;
+  const rng = createRng(seed);
+  const pool = [...others];
+  const picked = [];
+  while (picked.length < sport.rivalCount) picked.push(...pool.splice(rng.int(0, pool.length - 1), 1));
+  return picked;
 }
 
 startLoop({

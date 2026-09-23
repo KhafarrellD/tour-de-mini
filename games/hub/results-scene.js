@@ -2,8 +2,8 @@
  * Results for any sport: the finishing order, the player's time and best,
  * and a one-button menu to race again, change athlete, or go back.
  */
-import { drawText, LINE_HEIGHT } from '../../engine/font.js';
-import { formatClock, ordinal } from '../../engine/format.js';
+import { drawText, wrapText, LINE_HEIGHT } from '../../engine/font.js';
+import { ordinal } from '../../engine/format.js';
 import { shortName } from '../../data/athletes.js';
 import { createSideScene, SCENE } from '../shared/side-scene.js';
 import { createMenu } from '../shared/menu.js';
@@ -15,6 +15,8 @@ import { PALETTE } from '../../assets/palette.js';
 /** @typedef {import('../../data/athletes.js').Athlete} Athlete */
 
 const OPTIONS = ['RACE AGAIN', 'NEW ATHLETE', 'SPORTS'];
+/** Room for the summary inside the right-hand panel. */
+const SUMMARY_WIDTH = 134;
 
 /**
  * @param {{
@@ -53,21 +55,26 @@ export function createResultsScene({ sport, athlete, outcome, best, newBest, onR
         const color = row.isPlayer ? PALETTE.yellow : PALETTE.white;
         drawText(ctx, `${i + 1}`, 22, y, { align: 'right', color });
         drawText(ctx, row.isPlayer ? `${shortName(row.athlete)} (YOU)` : shortName(row.athlete), 28, y, { color });
-        drawText(ctx, formatClock(row.time), 152, y, { align: 'right', color });
+        drawText(ctx, sport.formatTime(row.time), 152, y, { align: 'right', color });
       });
 
       // Your race.
       drawPanel(ctx, 166, 26, 146, 92);
       drawText(ctx, sport.name, 172, 32, { color: PALETTE.lightGrey });
       drawText(ctx, 'YOUR TIME', 172, 46);
-      drawText(ctx, formatClock(outcome.time), 306, 42, { align: 'right', scale: 2, color: PALETTE.yellow });
+      drawText(ctx, sport.formatTime(outcome.time), 306, 42, { align: 'right', scale: 2, color: PALETTE.yellow });
       drawText(ctx, 'BEST', 172, 64);
-      if (best) drawText(ctx, formatClock(best.time), 306, 64, { align: 'right' });
+      if (best) drawText(ctx, sport.formatTime(best.time), 306, 64, { align: 'right' });
       if (newBest && Math.floor(time * 3) % 2 === 0) {
         drawText(ctx, 'NEW BEST!', 306, 76, { align: 'right', color: PALETTE.volt });
       }
-      outcome.summary.forEach((line, i) => {
-        drawText(ctx, line, 239, 90 + i * LINE_HEIGHT, { align: 'center', color: PALETTE.lightGrey });
+      // Summary lines wrap to the panel, whatever a sport puts in them.
+      const lines = outcome.summary.flatMap((line) => wrapText(line, SUMMARY_WIDTH));
+      lines.forEach((line, i) => {
+        drawText(ctx, line, 239, 112 - lines.length * LINE_HEIGHT + i * LINE_HEIGHT, {
+          align: 'center',
+          color: PALETTE.lightGrey,
+        });
       });
 
       // The player on the road, with the menu beside them.

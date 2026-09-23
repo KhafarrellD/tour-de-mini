@@ -13,6 +13,18 @@ export function formatClock(seconds) {
 }
 
 /**
+ * A short race time, m:ss.t. Sprints are decided by tenths, so a clock
+ * rounded to whole seconds would show the whole bunch on the same time.
+ * @param {number} seconds
+ */
+export function formatShort(seconds) {
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  const tenths = Math.floor((seconds * 10) % 10);
+  return `${m}:${String(s).padStart(2, '0')}.${tenths}`;
+}
+
+/**
  * "1ST", "2ND", "3RD", "4TH"... in capitals for the pixel font.
  * @param {number} n
  */

@@ -66,6 +66,46 @@ async function tapOnTheBeat(page) {
   });
 }
 
+/**
+ * Walks the hub to a sport's athlete select and picks the first athlete.
+ * @param {import('@playwright/test').Page} page
+ * @param {number} sportIndex
+ */
+async function startSport(page, sportIndex) {
+  await page.goto('/');
+  await waitForScene(page, 'title');
+  await page.waitForTimeout(300);
+  await page.keyboard.press('Space');
+  await waitForScene(page, 'sport-select');
+  await page.waitForTimeout(300);
+  for (let i = 0; i < sportIndex; i++) {
+    await page.keyboard.press('Space');
+    await page.waitForTimeout(200);
+  }
+  await hold(page);
+  await waitForScene(page, 'athlete-select');
+  // Let the button come back up before holding again, as a person would.
+  await page.waitForTimeout(400);
+  await hold(page);
+}
+
+/**
+ * Holds and releases the button on a rhythm, like braking into corners.
+ * @param {import('@playwright/test').Page} page
+ * @param {number} seconds
+ * @param {number} holdMs
+ * @param {number} gapMs
+ */
+async function pulse(page, seconds, holdMs, gapMs) {
+  const until = Date.now() + seconds * 1000;
+  while (Date.now() < until) {
+    await page.keyboard.down('Space');
+    await page.waitForTimeout(holdMs);
+    await page.keyboard.up('Space');
+    await page.waitForTimeout(gapMs);
+  }
+}
+
 for (const viewport of VIEWPORTS) {
   test.describe(`${viewport.name} ${viewport.width}px`, () => {
     test.use({
@@ -100,10 +140,12 @@ for (const viewport of VIEWPORTS) {
       await page.waitForTimeout(500);
       await page.screenshot({ path: `screenshots/${viewport.width}-2-sport.png` });
 
-      await page.keyboard.press('Space');
+      // Hold to take the first card (the marathon), tap once to change athlete.
+      await hold(page);
       await waitForScene(page, 'athlete-select');
+      await page.waitForTimeout(400);
       await page.keyboard.press('Space');
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(400);
       await page.screenshot({ path: `screenshots/${viewport.width}-3-athlete.png` });
 
       await hold(page);
@@ -159,14 +201,8 @@ test('a full marathon played on the beat reaches the results screen', async ({ p
   test.setTimeout(120_000);
   const errors = collectErrors(page);
   await page.setViewportSize({ width: 1280, height: 720 });
-  await page.goto('/');
-  await waitForScene(page, 'title');
-  await page.keyboard.press('Space');
-  await waitForScene(page, 'sport-select');
-  await page.keyboard.press('Space');
-  await waitForScene(page, 'athlete-select');
-  await hold(page);
-  await waitForScene(page, 'marathon-racing');
+  await startSport(page, 0);
+  await waitForScene(page, 'marathon-racing', 20_000);
   await tapOnTheBeat(page);
   const shots = /** @type {const} */ ([
     [31.5, 'wall'],
@@ -180,5 +216,42 @@ test('a full marathon played on the beat reaches the results screen', async ({ p
   await waitForScene(page, 'results', 20_000);
   await page.waitForTimeout(800);
   await page.screenshot({ path: 'screenshots/race-results.png' });
+  expect(errors).toEqual([]);
+});
+
+test('the sprint: pedalling, the draft and an attack bar, through to results', async ({ page }) => {
+  test.setTimeout(180_000);
+  const errors = collectErrors(page);
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await startSport(page, 1);
+  await waitForScene(page, 'sprint-racing', 20_000);
+  // Tap about five times a second, the way a person mashes a sprint.
+  await page.evaluate(() => {
+    const id = setInterval(() => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Space' }));
+      setTimeout(() => window.dispatchEvent(new KeyboardEvent('keyup', { code: 'Space' })), 60);
+    }, 190);
+    setTimeout(() => clearInterval(id), 120_000);
+  });
+  await page.waitForTimeout(12_000);
+  await page.screenshot({ path: 'screenshots/sprint-racing.png' });
+  await waitForScene(page, 'results', 120_000);
+  await page.waitForTimeout(600);
+  await page.screenshot({ path: 'screenshots/sprint-results.png' });
+  expect(errors).toEqual([]);
+});
+
+test('the descent: corners, signs and the speed gauge', async ({ page }) => {
+  test.setTimeout(120_000);
+  const errors = collectErrors(page);
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await startSport(page, 2);
+  await waitForScene(page, 'descent-riding', 20_000);
+  await page.waitForTimeout(4000);
+  await page.screenshot({ path: 'screenshots/descent-road.png' });
+  await pulse(page, 14, 500, 900);
+  await page.screenshot({ path: 'screenshots/descent-corner.png' });
+  const state = await page.locator('#game').getAttribute('data-scene');
+  expect(state).toContain('descent');
   expect(errors).toEqual([]);
 });
