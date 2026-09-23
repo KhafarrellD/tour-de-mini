@@ -14,12 +14,23 @@ import { PALETTE } from '../../assets/palette.js';
 const CARD_HEIGHT = 110;
 const CARD_GAP = 8;
 const MARGIN = 8;
+/** Where the tagline starts inside a card, and where the preview road begins. */
+const TAGLINE_TOP = 22;
+const ROAD_HEIGHT = 20;
+/** Padding taken off the card width before the tagline is wrapped. */
+export const TAGLINE_INSET = 12;
+
+/**
+ * Lines of tagline that fit between the card's title and its preview road.
+ * Cards are a fixed height, so this does not depend on how many there are.
+ */
+export const TAGLINE_ROWS = Math.floor((CARD_HEIGHT - ROAD_HEIGHT - TAGLINE_TOP - 2) / LINE_HEIGHT);
 
 /**
  * Cards share the width, shrinking as sports are added.
  * @param {number} count
  */
-function cardWidth(count) {
+export function cardWidth(count) {
   return Math.min(104, Math.floor((320 - MARGIN * 2 - (count - 1) * CARD_GAP) / count));
 }
 
@@ -60,16 +71,18 @@ export function createSportSelectScene({ sports, onPick }) {
           align: 'center',
           color: active ? PALETTE.yellow : PALETTE.white,
         });
-        wrapText(sport.tagline, width - 12).forEach((line, row) => {
-          drawText(ctx, line, x + width / 2, y + 22 + row * LINE_HEIGHT, {
+        // Clipped rather than spilled: a tagline that outgrows its card is
+        // caught by the layout test, not by the player.
+        wrapText(sport.tagline, width - TAGLINE_INSET).slice(0, TAGLINE_ROWS).forEach((line, row) => {
+          drawText(ctx, line, x + width / 2, y + TAGLINE_TOP + row * LINE_HEIGHT, {
             align: 'center',
             color: PALETTE.lightGrey,
           });
         });
         // A little stretch of road with the sport's first athlete in action.
-        const roadY = y + CARD_HEIGHT - 20;
+        const roadY = y + CARD_HEIGHT - ROAD_HEIGHT;
         ctx.fillStyle = PALETTE.road;
-        ctx.fillRect(x + 1, roadY, width - 2, 19);
+        ctx.fillRect(x + 1, roadY, width - 2, ROAD_HEIGHT - 1);
         ctx.fillStyle = PALETTE.roadLine;
         ctx.fillRect(x + 1, roadY, width - 2, 1);
         const [athlete] = athletesFor(sport.roster);

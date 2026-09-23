@@ -3,7 +3,7 @@
  * names above them. The highlighted athlete moves (runs in place, pedals)
  * and their details fill the panel above.
  */
-import { drawText, wrapText, LINE_HEIGHT } from '../../engine/font.js';
+import { drawText, wrapText, measureText, LINE_HEIGHT } from '../../engine/font.js';
 import { shortName } from '../../data/athletes.js';
 import { createSideScene, SCENE } from '../shared/side-scene.js';
 import { createMenu } from '../shared/menu.js';
@@ -17,6 +17,17 @@ const BUILDS = { compact: 'COMPACT', regular: 'REGULAR', tall: 'TALL' };
 
 /** Width available for an athlete's bio in the info panel, in game pixels. */
 export const BIO_WIDTH = 164;
+/** Width available for the headline name, before the stat bars begin. */
+export const NAME_WIDTH = 176;
+
+/**
+ * Names are drawn twice size, except the long ones — a couple of surnames
+ * would otherwise run straight through the stat bars.
+ * @param {string} name
+ */
+export function nameScale(name) {
+  return measureText(name) * 2 <= NAME_WIDTH ? 2 : 1;
+}
 
 /**
  * @param {{ sport: Sport, athletes: readonly Athlete[], startId?: string, onPick: (athlete: Athlete) => void }} options
@@ -41,7 +52,9 @@ export function createAthleteSelectScene({ sport, athletes, startId, onPick }) {
 
       const athlete = athletes[menu.index];
       drawPanel(ctx, 8, 18, 304, 78);
-      drawText(ctx, athlete.name, 14, 24, { scale: 2 });
+      // A shrunken name keeps its baseline, so the panel reads the same.
+      const scale = nameScale(athlete.name);
+      drawText(ctx, athlete.name, 14, 24 + (scale === 2 ? 0 : 5), { scale });
       drawText(ctx, `${athlete.country} - ${athlete.team}`, 14, 43, { color: PALETTE.lightGrey });
       wrapText(athlete.bio, BIO_WIDTH).forEach((line, row) => {
         drawText(ctx, line, 14, 56 + row * LINE_HEIGHT, { color: PALETTE.yellow });

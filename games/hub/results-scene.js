@@ -16,7 +16,9 @@ import { PALETTE } from '../../assets/palette.js';
 
 const OPTIONS = ['RACE AGAIN', 'NEW ATHLETE', 'SPORTS'];
 /** Room for the summary inside the right-hand panel. */
-const SUMMARY_WIDTH = 134;
+export const SUMMARY_WIDTH = 134;
+/** Lines of summary that fit below the best time without touching it. */
+export const SUMMARY_ROWS = 3;
 
 /**
  * @param {{
@@ -69,7 +71,7 @@ export function createResultsScene({ sport, athlete, outcome, best, newBest, onR
         drawText(ctx, 'NEW BEST!', 306, 76, { align: 'right', color: PALETTE.volt });
       }
       // Summary lines wrap to the panel, whatever a sport puts in them.
-      const lines = outcome.summary.flatMap((line) => wrapText(line, SUMMARY_WIDTH));
+      const lines = outcome.summary.flatMap((line) => wrapText(line, SUMMARY_WIDTH)).slice(0, SUMMARY_ROWS);
       lines.forEach((line, i) => {
         drawText(ctx, line, 239, 112 - lines.length * LINE_HEIGHT + i * LINE_HEIGHT, {
           align: 'center',

@@ -3,7 +3,7 @@
  * through switchbacks, corner signs warn what speed is safe, and a gauge
  * shows whether you are inside it. Hold the button to brake.
  */
-import { createDescent, stepDescent, cornerAhead, descentStandings, curvatureAt, DESCENT_METRES, SIGN_DISTANCE } from './descent.js';
+import { createDescent, stepDescent, cornerAhead, descentStandings, curvatureAt, SIGN_DISTANCE } from './descent.js';
 import { createRoadCamera, drawRoad, drawPosts, project, roadCenterAt, HORIZON_Y } from './road-view.js';
 import { drawRiderRear, MAX_LEAN } from '../../engine/character.js';
 import { cycleFrame } from '../../engine/animation.js';
@@ -20,7 +20,8 @@ import { PALETTE } from '../../assets/palette.js';
 /** @typedef {import('../sports.js').Outcome} Outcome */
 /** @typedef {import('../../engine/input.js').ButtonState} ButtonState */
 
-const INTRO = 2.6;
+const FULL_INTRO = 2.6;
+const SHORT_INTRO = 0.8;
 const FINISH_HOLD = 2.6;
 const TOP_SPEED_SHOWN = 26;
 const GAUGE = { x: 96, y: 168, width: 128, height: 7 };
@@ -30,17 +31,21 @@ const RIDER_GROUND_Y = 163;
 const COAST_CADENCE = 0.9;
 
 /**
- * @param {{ athlete: Athlete, rivals: Athlete[], seed: number, onFinish: (outcome: Outcome) => void }} options
+ * @param {{ athlete: Athlete, rivals: Athlete[], seed: number, metres?: number,
+ *   intro?: boolean, onFinish: (outcome: Outcome) => void }} options
+ *   `metres` shortens the descent and `intro: false` skips the briefing, both
+ *   for the Ironman's bike leg.
  * @returns {import('../../engine/director.js').Scene}
  */
-export function createDescentScene({ athlete, rivals, seed, onFinish }) {
-  const state = createDescent({ athlete, rivals, seed });
+export function createDescentScene({ athlete, rivals, seed, metres, intro = true, onFinish }) {
+  const state = createDescent({ athlete, rivals, seed, metres });
   const gravel = createParticles(120);
   const rng = createRng(seed ^ 0x9e37);
   const sky = createPixelCanvas(320, HORIZON_Y + 1);
   paintSky(sky.ctx, HORIZON_Y + 1);
   const mountains = mountainTile();
 
+  const INTRO = intro ? FULL_INTRO : SHORT_INTRO;
   /** @type {'intro' | 'riding' | 'finished'} */
   let phase = 'intro';
   let clock = 0;
@@ -196,10 +201,10 @@ export function createDescentScene({ athlete, rivals, seed, onFinish }) {
    * @param {CanvasRenderingContext2D} ctx
    */
   function drawFinishGate(ctx) {
-    const spot = project(camera, DESCENT_METRES, 0);
+    const spot = project(camera, state.metresTotal, 0);
     if (!spot) return;
     const x = Math.round(spot.x);
-    const width = Math.max(10, Math.round(620 / (DESCENT_METRES - state.metres + 1)) * 2 + 24);
+    const width = Math.max(10, Math.round(620 / (state.metresTotal - state.metres + 1)) * 2 + 24);
     const height = Math.max(4, Math.round(width * 0.22));
     const top = Math.round(spot.y) - height - Math.round(width * 0.55);
     ctx.fillStyle = PALETTE.outline;
@@ -227,7 +232,7 @@ export function createDescentScene({ athlete, rivals, seed, onFinish }) {
     drawText(ctx, kmh, 5, 3, { scale: 2, color: PALETTE.yellow });
     drawText(ctx, 'KM/H', 5 + measureText(kmh) * 2 + 4, 9);
     drawText(ctx, formatShort(state.time), 160, 6, { align: 'center' });
-    const toGo = `${Math.max(0, Math.round(DESCENT_METRES - state.metres))} M`;
+    const toGo = `${Math.max(0, Math.round(state.metresTotal - state.metres))} M`;
     drawText(ctx, toGo, 315, 6, { align: 'right' });
 
     // Speed gauge: keep the marker inside the green before the corner.
@@ -263,9 +268,11 @@ export function createDescentScene({ athlete, rivals, seed, onFinish }) {
   /** @param {CanvasRenderingContext2D} ctx */
   function drawOverlay(ctx) {
     if (phase === 'intro') {
-      drawText(ctx, 'THE DESCENT', 160, 30, { align: 'center', scale: 3, color: PALETTE.yellow });
-      drawText(ctx, 'HOLD TO BRAKE. EVERY CORNER SHOWS ITS SAFE SPEED', 160, 58, { align: 'center' });
-      drawText(ctx, 'KEEP THE MARKER OUT OF THE RED', 160, 70, { align: 'center', color: PALETTE.skyHaze });
+      drawText(ctx, intro ? 'THE DESCENT' : 'BIKE LEG', 160, 30, { align: 'center', scale: 3, color: PALETTE.yellow });
+      if (intro) {
+        drawText(ctx, 'HOLD TO BRAKE. EVERY CORNER SHOWS ITS SAFE SPEED', 160, 58, { align: 'center' });
+        drawText(ctx, 'KEEP THE MARKER OUT OF THE RED', 160, 70, { align: 'center', color: PALETTE.skyHaze });
+      }
     }
     if (state.down > 0) drawText(ctx, 'BACK ON!', 160, 44, { align: 'center', scale: 2, color: PALETTE.red });
     if (phase === 'finished') drawText(ctx, 'FINISH!', 160, 34, { align: 'center', scale: 3, color: PALETTE.yellow });

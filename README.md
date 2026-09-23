@@ -6,9 +6,10 @@ Canvas 2D API: no frameworks, no game engine, no build step.
 
 ![The marathon: the pack runs past the Alps while the player taps the pace bar on the beat](docs/media/marathon.gif)
 
-**Status:** three events are playable — the Marathon, the Tour sprint and the
-descent — and every athlete sprite is done ([sprite gallery](gallery.html)).
-The Ironman is next.
+**Status:** all four events are playable — the Marathon, the Tour sprint, the
+descent and the Ironman — and every athlete sprite is done
+([sprite gallery](gallery.html)). Sound, the hub polish pass and deployment
+are next.
 
 ## How to play
 
@@ -26,6 +27,12 @@ Everything is played with one button: **Space**, **Enter**, or a **tap** anywher
 - **The descent:** switchbacks off the mountain, seen from behind the rider. Hold the button to
   brake, release to let the bike run. Every corner is signed with its safe speed and the gauge
   shows whether you are inside it: a little over and you wobble, far over and you crash.
+- **Ironman:** four stages on one clock, about a minute and a half. Swim side-on, tapping to
+  stroke up and sinking between strokes, through the gaps between buoys and other swimmers.
+  Then the bike leg down the mountain, braking into the corners. Then T2: three prompts —
+  rack the bike, shoes on, go — each a quick sweep of the timing bar, with every fumble added
+  to your race time. Then the run to the line, tapping to stride, with one attack on the way.
+  A card after each stage shows the split and where it leaves you.
 
 ## Run it locally
 
@@ -41,8 +48,8 @@ npm run serve        # http://localhost:4173  (any static server works)
 npm test             # unit tests (Node's built-in test runner)
 npm run typecheck    # JSDoc types checked by TypeScript, no compilation
 npx playwright test  # loads every page at 375, 768 and 1440px wide, walks the hub into a
-                     # race, plays a full marathon, fails on console errors or overflow,
-                     # and saves screenshots to screenshots/
+                     # race, plays a full marathon and a full Ironman, fails on console
+                     # errors or overflow, and saves screenshots to screenshots/
 ```
 
 ## How it works
@@ -63,10 +70,14 @@ games/hub/                 title, sport select, athlete select, results
 games/marathon/            race.js (the rules, pure) and marathon-scene.js (the drawing)
 games/cycling/             sprint.js and descent.js (the rules), their scenes, and
                            road-view.js, the chase camera that draws a road per screen row
+games/ironman/             swim.js, transition.js and ironman.js (the rules and the
+                           scoreboard), their scenes, and ironman-scene.js, which runs the
+                           four stages and the cards between them
 games/shared/              timing bar, one-button menu, scenery and UI used by every sport
 assets/                    sprite rigs, font glyphs, palette, scenery painters, CSS
 data/athletes.js           every athlete: name, team, kit, traits, stats
 tests/unit, tests/visual   Node unit tests, Playwright page checks
+tests/helpers/players.js   the simulated people the balance tests race
 ```
 
 A few rules hold everywhere:
@@ -78,12 +89,18 @@ A few rules hold everywhere:
   animation is driven by what the athlete is doing: legs follow cadence, wheels follow distance.
 - **One button.** Every game is playable with Space, Enter or a tap. The page never scrolls on
   Space, including when the game is embedded in an iframe.
+- **Stages are shared, not copied.** The Ironman does not reimplement a bike race or a run: it
+  builds the descent over a shorter course and the sprint over a shorter finish, and both take
+  a distance. The sprint scene draws the same race either on bikes or on foot, so the run to
+  the line is the sprint's rules with runners in it.
 - **Rules are pure, scenes only draw.** Each game's rules live in a module with no DOM, like
   `games/marathon/race.js`, so they are unit-tested directly. That includes balance: the tests
   play hundreds of races with simulated people whose taps have a normal timing error (45 ms for
   a sharp player, 100 ms for a casual one), and check that sharp players usually win, casual
   ones land mid-pack, and mashing finishes last. Timing windows are asserted to stay wide enough
-  for people, not just bots.
+  for people, not just bots. The Ironman is judged the same way, end to end: a player who reads
+  the gaps, brakes into the corners, hits the transition prompts and drafts the run wins it,
+  and no single stage can decide the race on its own.
 
 ## How sprites are defined
 

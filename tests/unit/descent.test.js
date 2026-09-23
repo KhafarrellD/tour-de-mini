@@ -9,8 +9,8 @@ import {
   curvatureAt,
 } from '../../games/cycling/descent.js';
 import { athletesFor } from '../../data/athletes.js';
+import { STEP, cleanRider } from '../helpers/players.js';
 
-const STEP = 1 / 60;
 const [player, ...rest] = athletesFor('cycling');
 const rivals = rest.slice(0, 4);
 
@@ -33,17 +33,6 @@ function ride(state, brake) {
   }
   return { state, events };
 }
-
-/** Brakes so as to arrive at every corner on its safe speed. */
-const cleanRider = (/** @type {Descent} */ state) => {
-  const corner = cornerAhead(state);
-  if (!corner) return false;
-  const distance = Math.max(0.1, corner.at - state.metres);
-  // Braking distance for the speed we need to lose, plus a margin.
-  const excess = state.speed - corner.safeSpeed;
-  if (excess <= 0) return false;
-  return distance <= (state.speed ** 2 - corner.safeSpeed ** 2) / (2 * 8.5) + 6;
-};
 
 test('the descent is a course of corners, each with a safe speed', () => {
   const state = newDescent();
@@ -161,4 +150,13 @@ test('balance: a clean descent wins, a wild one loses', () => {
   }
   assert.ok(cleanPlaces / 10 <= 1.5, `clean rider averaged ${(cleanPlaces / 10).toFixed(2)}`);
   assert.equal(recklessPlaces / 10, 5, 'never braking finishes last');
+});
+
+test('a shorter course can be built for the Ironman bike leg', () => {
+  const short = createDescent({ athlete: player, rivals, seed: 2, metres: 700 });
+  assert.equal(short.metresTotal, 700);
+  assert.ok(short.course.length >= 3, `only ${short.course.length} corners`);
+  for (const corner of short.course) assert.ok(corner.at < 700);
+  const { state } = ride(short, cleanRider);
+  assert.ok(state.time > 20 && state.time < 45, `short descent took ${state.time.toFixed(1)} s`);
 });

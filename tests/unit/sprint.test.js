@@ -10,9 +10,8 @@ import {
 } from '../../games/cycling/sprint.js';
 import { markerPosition } from '../../games/shared/timing-bar.js';
 import { athletesFor } from '../../data/athletes.js';
-import { createRng } from '../../engine/rng.js';
+import { STEP, steadyRider, draftingRider, masher } from '../helpers/players.js';
 
-const STEP = 1 / 60;
 const [player, ...rest] = athletesFor('cycling');
 const rivals = rest.slice(0, 4);
 
@@ -33,50 +32,6 @@ function play(state, press) {
   return state;
 }
 
-/**
- * Aims at the middle of the attack bar with human timing error.
- * @param {ReturnType<typeof createRng>} rng
- * @param {number} sigma
- */
-function attacker(rng, sigma) {
-  let plannedFor = -1;
-  let pressAt = Infinity;
-  return (/** @type {Sprint} */ state) => {
-    if (!state.window) return false;
-    if (state.window.at !== plannedFor) {
-      plannedFor = state.window.at;
-      const gaussian = Math.sqrt(-2 * Math.log(1 - rng.next())) * Math.cos(2 * Math.PI * rng.next());
-      const next = Math.floor(state.window.marker - 0.5) + 1.5;
-      pressAt = state.time + (next - state.window.marker) * state.window.sweep + gaussian * sigma;
-    }
-    return state.time <= pressAt && state.time + STEP > pressAt;
-  };
-}
-
-/** Taps at a steady rhythm and attacks on cue, but ignores the wind. */
-function steadyRider(seed = 5, everyN = 15) {
-  const attack = attacker(createRng(seed), 0.05);
-  return (/** @type {Sprint} */ state, /** @type {number} */ step) =>
-    state.window ? attack(state) : step % everyN === 0;
-}
-
-/**
- * The intended way to ride: hold a rival's wheel to save the tank, then
- * empty it over the last 300 m, attacking on cue.
- */
-function draftingRider(seed = 5) {
-  const attack = attacker(createRng(seed), 0.05);
-  return (/** @type {Sprint} */ state, /** @type {number} */ step) => {
-    if (state.window) return attack(state);
-    if (state.toGo < 300) return step % 3 === 0;
-    const gaps = state.rivals.map((rival) => rival.metres - state.player.metres).filter((gap) => gap > 0);
-    const gap = gaps.length ? Math.min(...gaps) : Infinity;
-    // Work to catch a wheel, ease once on it, and never run into it.
-    return step % (gap > 14 ? 8 : gap < 4 ? 16 : 12) === 0;
-  };
-}
-
-const masher = (/** @type {Sprint} */ _state, /** @type {number} */ step) => step % 2 === 0;
 
 /** @param {Sprint} state */
 const placeOf = (state) => sprintStandings(state).findIndex((row) => row.isPlayer) + 1;
@@ -210,4 +165,13 @@ test('balance: an emptied tank costs real speed', () => {
 test('balance: doing nothing finishes last', () => {
   const state = play(newSprint(), () => false);
   assert.equal(placeOf(state), 5);
+});
+
+test('a shorter sprint can be built for the Ironman finish', () => {
+  const short = createSprint({ athlete: player, rivals, seed: 2, metres: 260, attackPoints: [120] });
+  assert.equal(short.toGo, 260);
+  assert.equal(short.metresTotal, 260);
+  const state = play(short, draftingRider());
+  assert.ok(state.time > 6 && state.time < 16, `short sprint took ${state.time.toFixed(1)} s`);
+  assert.ok(state.player.attacks.length <= 1, 'only the one attack window');
 });

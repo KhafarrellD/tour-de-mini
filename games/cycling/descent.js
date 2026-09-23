@@ -20,7 +20,7 @@ export const DESCENT_METRES = 1300;
 /** Speed with the brakes off on this gradient. */
 const TOP_SPEED = 25;
 const ACCELERATION = 4.2;
-const BRAKING = 8.5;
+export const BRAKING = 8.5;
 const MIN_SPEED = 7;
 /** Over the safe speed by this much is a wobble; more is a crash. */
 const WOBBLE_MARGIN = 1.08;
@@ -44,15 +44,16 @@ const VIEW_AHEAD = 320;
  * A seeded course: alternating corners with straights between them, a few
  * of them hairpins, tightening slightly toward the bottom.
  * @param {ReturnType<typeof createRng>} rng
+ * @param {number} metres length of the descent
  * @returns {Corner[]}
  */
-function buildCourse(rng) {
+function buildCourse(rng, metres) {
   /** @type {Corner[]} */
   const corners = [];
   let at = 140;
   /** @type {1 | -1} */
   let direction = rng.next() < 0.5 ? 1 : -1;
-  while (at < DESCENT_METRES - 130) {
+  while (at < metres - 130) {
     const hairpin = rng.next() < 0.28;
     const radius = hairpin ? 26 + rng.next() * 10 : 50 + rng.next() * 60;
     corners.push({
@@ -70,16 +71,19 @@ function buildCourse(rng) {
 }
 
 /**
- * @param {{ athlete: Athlete, rivals: Athlete[], seed: number }} options
+ * @param {{ athlete: Athlete, rivals: Athlete[], seed: number, metres?: number }} options
+ *   `metres` shortens the course for the Ironman's bike leg.
  */
-export function createDescent({ athlete, rivals, seed }) {
+export function createDescent({ athlete, rivals, seed, metres = DESCENT_METRES }) {
   const rng = createRng(seed);
-  const course = buildCourse(rng);
+  const course = buildCourse(rng, metres);
   return {
     athlete,
     course,
+    /** Length of this descent. */
+    metresTotal: metres,
     /** How hard the road bends, one entry per metre. */
-    curvature: buildCurvature(course),
+    curvature: buildCurvature(course, metres),
     time: 0,
     metres: 0,
     speed: 14,
@@ -90,7 +94,7 @@ export function createDescent({ athlete, rivals, seed }) {
     clean: 0,
     wobbles: 0,
     crashes: 0,
-    rivals: rivals.map((rival) => ({ athlete: rival, time: rivalTime(rival, course, rng) })),
+    rivals: rivals.map((rival) => ({ athlete: rival, time: rivalTime(rival, course, rng, metres) })),
   };
 }
 
@@ -101,9 +105,10 @@ export function createDescent({ athlete, rivals, seed }) {
  * corner, eased in and out so corners flow rather than snap. Positive bends
  * right. The chase camera adds this up to draw the road ahead.
  * @param {Corner[]} course
+ * @param {number} metres
  */
-function buildCurvature(course) {
-  const curvature = new Float64Array(DESCENT_METRES + VIEW_AHEAD);
+function buildCurvature(course, metres) {
+  const curvature = new Float64Array(metres + VIEW_AHEAD);
   for (const corner of course) {
     const half = corner.hairpin ? 26 : 38;
     for (let metre = corner.at - half; metre <= corner.at + half; metre++) {
@@ -196,8 +201,8 @@ export function stepDescent(state, dt, braking) {
     }
   }
 
-  if (state.metres >= DESCENT_METRES) {
-    state.metres = DESCENT_METRES;
+  if (state.metres >= state.metresTotal) {
+    state.metres = state.metresTotal;
     state.finished = true;
     events.push({ type: 'finish' });
   }
@@ -211,30 +216,31 @@ export function stepDescent(state, dt, braking) {
  * @param {Athlete} athlete
  * @param {Corner[]} course
  * @param {ReturnType<typeof createRng>} rng
+ * @param {number} metres
  */
-function rivalTime(athlete, course, rng) {
+function rivalTime(athlete, course, rng, metres) {
   const { technique } = athlete.stats;
   const margin = 0.82 + technique * 0.012 + (rng.next() - 0.5) * 0.05;
   const lag = Math.max(0, 0.3 - technique * 0.02 + (rng.next() - 0.5) * 0.12);
   const dt = 1 / 30;
   let time = 0;
-  let metres = 0;
+  let ridden = 0;
   let speed = 14;
   let index = 0;
-  while (metres < DESCENT_METRES && time < 400) {
+  while (ridden < metres && time < 400) {
     const corner = course[index];
     let braking = false;
     if (corner) {
       const target = corner.safeSpeed * margin;
       const needed = (speed * speed - target * target) / (2 * BRAKING);
-      braking = speed > target && corner.at - metres <= needed + 6 - speed * lag;
+      braking = speed > target && corner.at - ridden <= needed + 6 - speed * lag;
     }
     speed = braking
       ? Math.max(MIN_SPEED, speed - BRAKING * dt)
       : Math.min(TOP_SPEED, speed + ACCELERATION * dt);
-    metres += speed * dt;
+    ridden += speed * dt;
     time += dt;
-    if (corner && metres >= corner.at) {
+    if (corner && ridden >= corner.at) {
       index++;
       const over = speed / corner.safeSpeed;
       if (over >= CRASH_MARGIN) {
@@ -262,7 +268,7 @@ function rivalTime(athlete, course, rng) {
 export function descentStandings(state) {
   const projected = state.finished
     ? state.time
-    : state.time + (DESCENT_METRES - state.metres) / Math.max(MIN_SPEED, state.speed);
+    : state.time + (state.metresTotal - state.metres) / Math.max(MIN_SPEED, state.speed);
   return [
     { athlete: state.athlete, time: projected, isPlayer: true },
     ...state.rivals.map((rival) => ({ athlete: rival.athlete, time: rival.time, isPlayer: false })),

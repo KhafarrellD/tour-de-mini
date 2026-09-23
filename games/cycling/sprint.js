@@ -38,15 +38,21 @@ const DRAFT_SAVING = 0.4;
  */
 
 /**
- * @param {{ athlete: Athlete, rivals: Athlete[], seed: number }} options
+ * @param {{ athlete: Athlete, rivals: Athlete[], seed: number, metres?: number,
+ *   attackPoints?: readonly number[] }} options
+ *   `metres` and `attackPoints` shorten the finish for the Ironman.
  */
-export function createSprint({ athlete, rivals, seed }) {
+export function createSprint({ athlete, rivals, seed, metres = SPRINT_METRES, attackPoints = ATTACK_POINTS }) {
   const rng = createRng(seed);
   return {
     time: 0,
     finished: false,
+    /** Length of this sprint. */
+    metresTotal: metres,
+    /** Where the attack bars appear, in metres to go. */
+    attackPoints,
     /** Metres still to ride. */
-    toGo: SPRINT_METRES,
+    toGo: metres,
     /** @type {{ at: number, marker: number, sweep: number, zone: number, perfect: number, endsAt: number, used: boolean } | null} */
     window: null,
     nextWindow: 0,
@@ -139,8 +145,8 @@ export function stepSprint(state, dt, pressed) {
       pressed = false;
     }
     if (state.time >= state.window.endsAt) state.window = null;
-  } else if (state.nextWindow < ATTACK_POINTS.length && state.toGo <= ATTACK_POINTS[state.nextWindow]) {
-    const at = ATTACK_POINTS[state.nextWindow++];
+  } else if (state.nextWindow < state.attackPoints.length && state.toGo <= state.attackPoints[state.nextWindow]) {
+    const at = state.attackPoints[state.nextWindow++];
     state.window = { at, marker: 0, ...WINDOW_BAR, endsAt: state.time + WINDOW_SECONDS, used: false };
     events.push({ type: 'window', at });
   }
@@ -171,16 +177,16 @@ export function stepSprint(state, dt, pressed) {
   player.speed = damp(player.speed, target, 1.7, dt);
   player.boost = Math.max(0, player.boost - 1.25 * dt);
   player.metres += player.speed * dt;
-  state.toGo = Math.max(0, SPRINT_METRES - player.metres);
+  state.toGo = Math.max(0, state.metresTotal - player.metres);
 
   for (const rival of state.rivals) stepRival(state, rival, dt);
 
-  if (player.metres >= SPRINT_METRES && player.time === null) {
+  if (player.metres >= state.metresTotal && player.time === null) {
     player.time = state.time;
     state.finished = true;
     // Rivals still on the road finish at their current speed.
     for (const rival of state.rivals) {
-      if (rival.time === null) rival.time = state.time + (SPRINT_METRES - rival.metres) / rival.speed;
+      if (rival.time === null) rival.time = state.time + (state.metresTotal - rival.metres) / rival.speed;
     }
     events.push({ type: 'finish' });
   }
@@ -194,7 +200,7 @@ export function stepSprint(state, dt, pressed) {
  */
 function stepRival(state, rival, dt) {
   if (rival.time !== null) return;
-  const toGo = SPRINT_METRES - rival.metres;
+  const toGo = state.metresTotal - rival.metres;
   const surging = toGo <= rival.surgeAt && toGo > rival.surgeAt - 300;
   const kicking = toGo <= 150;
   const paying = toGo <= rival.surgeAt - 300;
@@ -210,7 +216,7 @@ function stepRival(state, rival, dt) {
     (sheltered ? DRAFT_SPEED : 0);
   rival.speed = damp(rival.speed, target, 1.5, dt);
   rival.metres += rival.speed * dt;
-  if (rival.metres >= SPRINT_METRES) rival.time = state.time;
+  if (rival.metres >= state.metresTotal) rival.time = state.time;
 }
 
 /**
@@ -230,7 +236,7 @@ export function sprintStandings(state) {
   const rows = [state.player, ...state.rivals].map((rider) => ({
     athlete: rider.athlete,
     metres: rider.metres,
-    time: rider.time ?? state.time + (SPRINT_METRES - rider.metres) / Math.max(1, rider.speed),
+    time: rider.time ?? state.time + (state.metresTotal - rider.metres) / Math.max(1, rider.speed),
     isPlayer: rider === state.player,
   }));
   return rows.sort((a, b) => a.time - b.time);

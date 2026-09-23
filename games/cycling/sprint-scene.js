@@ -2,11 +2,15 @@
  * The final 2 km on screen: the bunch strung out along the road, a stamina
  * bar you have to nurse, and an attack bar at 500, 200 and 100 m to go.
  * sprint.js decides everything; this scene draws it.
+ *
+ * The same picture serves the Ironman's run to the line: the rules are
+ * identical, so only the bodies change — riders on bikes become runners on
+ * their feet, and the wording follows them.
  */
-import { createSprint, stepSprint, sprintStandings, playerDraft, SPRINT_METRES } from './sprint.js';
+import { createSprint, stepSprint, sprintStandings, playerDraft } from './sprint.js';
 import { drawTimingBar } from '../shared/timing-bar.js';
 import { createSideScene, SCENE } from '../shared/side-scene.js';
-import { drawRider, PEDAL_FRAMES, WHEEL_FRAMES } from '../../engine/character.js';
+import { drawRider, drawRunner, PEDAL_FRAMES, WHEEL_FRAMES } from '../../engine/character.js';
 import { cycleFrame, wheelTurns } from '../../engine/animation.js';
 import { createParticles } from '../../engine/particles.js';
 import { createRng } from '../../engine/rng.js';
@@ -20,7 +24,8 @@ import { WHEEL } from '../../assets/sprites/bike.js';
 /** @typedef {import('../sports.js').Outcome} Outcome */
 /** @typedef {import('../../engine/input.js').ButtonState} ButtonState */
 
-const INTRO = 2.6;
+const FULL_INTRO = 2.6;
+const SHORT_INTRO = 0.9;
 const FINISH_HOLD = 2.8;
 /** Screen pixels per metre of road. */
 const PX_PER_METRE = 2.2;
@@ -29,13 +34,27 @@ const PLAYER_X = 104;
 const TOP_CADENCE = 2.4;
 const BAR = { x: 118, y: 168, width: 104 };
 const STAMINA = { x: 8, y: 168, width: 86, height: 7 };
+/** Strides per second at full effort. */
+const TOP_STRIDE = 3.2;
+const RUN_FRAMES = 6;
+
+/** What changes between a bunch sprint and a run to the line. */
+const DISCIPLINES = {
+  bike: { spacing: 9, prompt: 'TAP TO PEDAL', hint: 'TAP TO PEDAL, SIT IN A WHEEL TO SAVE YOUR LEGS' },
+  run: { spacing: 15, prompt: 'TAP TO STRIDE', hint: 'TAP TO STRIDE, TUCK IN BEHIND TO SAVE YOUR LEGS' },
+};
 
 /**
- * @param {{ athlete: Athlete, rivals: Athlete[], seed: number, onFinish: (outcome: Outcome) => void }} options
+ * @param {{ athlete: Athlete, rivals: Athlete[], seed: number, metres?: number,
+ *   attackPoints?: readonly number[], intro?: boolean, title?: string,
+ *   discipline?: 'bike' | 'run', onFinish: (outcome: Outcome) => void }} options
+ *   The short options are for the Ironman's run to the line.
  * @returns {import('../../engine/director.js').Scene}
  */
-export function createSprintScene({ athlete, rivals, seed, onFinish }) {
-  const state = createSprint({ athlete, rivals, seed });
+export function createSprintScene({ athlete, rivals, seed, metres, attackPoints, intro = true, title = 'FINAL 2 KM', discipline = 'bike', onFinish }) {
+  const style = DISCIPLINES[discipline];
+  const onFoot = discipline === 'run';
+  const state = createSprint({ athlete, rivals, seed, metres, attackPoints });
   const scene = createSideScene();
   const grit = createParticles(80);
   const rng = createRng(seed ^ 0x51ed);
@@ -44,10 +63,11 @@ export function createSprintScene({ athlete, rivals, seed, onFinish }) {
     rider,
     isPlayer: i === 0,
     lane: i === 0 ? 0 : i % 2,
-    x: PLAYER_X + (i === 0 ? 0 : (i % 2 === 0 ? 1 : -1) * 9),
+    x: PLAYER_X + (i === 0 ? 0 : (i % 2 === 0 ? 1 : -1) * style.spacing),
     crank: i * 0.31,
   }));
 
+  const INTRO = intro ? FULL_INTRO : SHORT_INTRO;
   /** @type {'intro' | 'racing' | 'finished'} */
   let phase = 'intro';
   let clock = 0;
@@ -56,7 +76,7 @@ export function createSprintScene({ athlete, rivals, seed, onFinish }) {
   /** @type {{ text: string, color: string, age: number } | null} */
   let popup = null;
   /** @type {{ text: string, color: string, age: number } | null} */
-  let banner = { text: 'FINAL 2 KM', color: PALETTE.yellow, age: 0 };
+  let banner = { text: title, color: PALETTE.yellow, age: 0 };
   let finalRows = /** @type {ReturnType<typeof sprintStandings>} */ ([]);
 
   const self = {
@@ -130,11 +150,15 @@ export function createSprintScene({ athlete, rivals, seed, onFinish }) {
       const drafting = playerDraft(state);
       for (const entry of [...riders].sort((a, b) => b.lane - a.lane)) {
         const y = SCENE.laneY - entry.lane * 7;
-        const pedal = cycleFrame(entry.crank, PEDAL_FRAMES);
-        const wheel = cycleFrame(wheelTurns(entry.rider.metres * PX_PER_METRE, WHEEL.size) * WHEEL_FRAMES, WHEEL_FRAMES);
         if (entry.isPlayer) drawPlayerRing(ctx, entry.x, y);
         const flashing = entry.isPlayer && flash > 0;
-        drawRider(ctx, entry.rider.athlete, 'bike', 'pedal', pedal, wheel, entry.x, y, { flash: flashing });
+        if (onFoot) {
+          drawRunner(ctx, entry.rider.athlete, 'run', 'run', cycleFrame(entry.crank, RUN_FRAMES), entry.x, y, { flash: flashing });
+        } else {
+          const pedal = cycleFrame(entry.crank, PEDAL_FRAMES);
+          const wheel = cycleFrame(wheelTurns(entry.rider.metres * PX_PER_METRE, WHEEL.size) * WHEEL_FRAMES, WHEEL_FRAMES);
+          drawRider(ctx, entry.rider.athlete, 'bike', 'pedal', pedal, wheel, entry.x, y, { flash: flashing });
+        }
       }
       if (phase === 'racing' && state.player.boost > 1) drawSpeedLines(ctx, clock);
       drawHud(ctx, drafting);
@@ -150,7 +174,7 @@ export function createSprintScene({ athlete, rivals, seed, onFinish }) {
       entry.x = damp(entry.x, Math.max(-50, Math.min(370, target)), 6, dt);
       if (phase === 'intro') continue;
       const cadence = entry.isPlayer ? state.player.cadence : 0.62;
-      entry.crank += cadence * TOP_CADENCE * dt;
+      entry.crank += cadence * (onFoot ? TOP_STRIDE : TOP_CADENCE) * dt;
       if (entry.isPlayer && state.player.cadence > 0.8 && rng.next() < 0.25) kickGrit(entry);
     }
   }
@@ -158,7 +182,7 @@ export function createSprintScene({ athlete, rivals, seed, onFinish }) {
   /** A little road spray off the back wheel when the player is going hard. */
   function kickGrit(/** @type {typeof riders[number]} */ entry) {
     grit.spawn({
-      x: entry.x - 12,
+      x: entry.x - (onFoot ? 6 : 12),
       y: SCENE.laneY - entry.lane * 7 - 1,
       vx: -70 - rng.next() * 40,
       vy: -8 - rng.next() * 10,
@@ -173,7 +197,7 @@ export function createSprintScene({ athlete, rivals, seed, onFinish }) {
    * @param {number} camera
    */
   function drawFinishLine(ctx, camera) {
-    const x = Math.round(SPRINT_METRES * PX_PER_METRE + PLAYER_X - camera);
+    const x = Math.round(state.metresTotal * PX_PER_METRE + PLAYER_X - camera);
     if (x < -60 || x > 380) return;
     const text = 'FINISH';
     const width = measureText(text) + 16;
@@ -230,20 +254,21 @@ export function createSprintScene({ athlete, rivals, seed, onFinish }) {
     if (!state.player.emptied || Math.floor(clock * 6) % 2 === 0) {
       ctx.fillRect(STAMINA.x, STAMINA.y, Math.round(STAMINA.width * state.player.stamina), STAMINA.height);
     }
-    if (drafting) drawText(ctx, 'DRAFT', STAMINA.x + STAMINA.width + 8, STAMINA.y, { color: PALETTE.volt });
+    // Far right, so it never runs into the prompt in the middle.
+    if (drafting) drawText(ctx, 'DRAFT', 315, STAMINA.y, { align: 'right', color: PALETTE.volt });
 
     if (state.window) {
       drawText(ctx, 'ATTACK!', BAR.x + BAR.width / 2, BAR.y - 11, { align: 'center', color: PALETTE.yellow });
       drawTimingBar(ctx, BAR.x, BAR.y, BAR.width, state.window, state.window.marker);
     } else if (phase === 'racing' && (clock < 6 || state.player.cadence < 0.2)) {
-      drawText(ctx, 'TAP TO PEDAL', BAR.x + BAR.width / 2, BAR.y, { align: 'center', color: PALETTE.lightGrey });
+      drawText(ctx, style.prompt, BAR.x + BAR.width / 2, BAR.y, { align: 'center', color: PALETTE.lightGrey });
     }
   }
 
   /** @param {CanvasRenderingContext2D} ctx */
   function drawOverlay(ctx) {
-    if (phase === 'intro') {
-      drawText(ctx, 'TAP TO PEDAL, SIT IN A WHEEL TO SAVE YOUR LEGS', 160, 58, { align: 'center' });
+    if (phase === 'intro' && intro) {
+      drawText(ctx, style.hint, 160, 58, { align: 'center' });
       drawText(ctx, 'ATTACK WHEN THE BAR APPEARS', 160, 70, { align: 'center', color: PALETTE.skyHaze });
     }
     if (banner && banner.age < 1.6) {

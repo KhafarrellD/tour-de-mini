@@ -255,3 +255,131 @@ test('the descent: corners, signs and the speed gauge', async ({ page }) => {
   expect(state).toContain('descent');
   expect(errors).toEqual([]);
 });
+
+/**
+ * Plays whichever Ironman stage is on screen, the way each one is meant to
+ * be played: stroking through the swim, braking into corners on the bike,
+ * hitting the transition prompts, striding for the line. Runs from the test
+ * so it can follow the stage the page reports.
+ * @param {import('@playwright/test').Page} page
+ * @param {(scene: string) => Promise<void> | void} [onStage] called once per new scene
+ * @param {string} [until] stop once this scene has been played
+ */
+async function playIronman(page, onStage, until) {
+  const deadline = Date.now() + 170_000;
+  let seen = '';
+  let braking = false;
+  let lastTap = 0;
+  while (Date.now() < deadline) {
+    const scene = await page.evaluate(() => document.getElementById('game')?.dataset.scene ?? '');
+    if (!scene || scene === 'results') break;
+    if (scene !== seen) {
+      if (until && seen === until) break;
+      seen = scene;
+      if (onStage) await onStage(scene);
+    }
+    const now = Date.now();
+    if (scene.endsWith('swim-swimming') && now - lastTap > 300) {
+      lastTap = now;
+      await page.keyboard.press('Space');
+    } else if (scene.endsWith('descent-riding')) {
+      // Brake in bursts: enough to take corners, not enough to crawl.
+      const brake = Math.floor(now / 700) % 3 === 0;
+      if (brake !== braking) {
+        braking = brake;
+        await page.keyboard[brake ? 'down' : 'up']('Space');
+      }
+    } else if (scene.endsWith('transition') && now - lastTap > 560) {
+      lastTap = now;
+      await page.keyboard.press('Space');
+    } else if (scene.endsWith('sprint-racing') && now - lastTap > 170) {
+      lastTap = now;
+      await page.keyboard.press('Space');
+    }
+    await page.waitForTimeout(50);
+  }
+  if (braking) await page.keyboard.up('Space');
+}
+
+test('the ironman: four stages, cards between them, one clock', async ({ page }) => {
+  test.setTimeout(240_000);
+  const errors = collectErrors(page);
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await startSport(page, 3);
+
+  /** @type {string[]} */
+  const stages = [];
+  await playIronman(page, async (scene) => {
+    stages.push(scene);
+    // One screenshot per stage and per card, as they come up.
+    const shot = {
+      'ironman-swim-swim-swimming': 'ironman-1-swim',
+      'ironman-card-swim': 'ironman-2-card-swim',
+      'ironman-bike-descent-riding': 'ironman-3-bike',
+      'ironman-t2-transition': 'ironman-4-t2',
+      'ironman-run-sprint-racing': 'ironman-5-run',
+      'ironman-card-run': 'ironman-6-card-run',
+    }[scene];
+    if (shot) {
+      await page.waitForTimeout(scene.includes('card') ? 700 : 2200);
+      await page.screenshot({ path: `screenshots/${shot}.png` });
+    }
+  });
+
+  // Every stage was raced, in order, with a card after each one.
+  for (const stage of ['swim-swimming', 'descent-riding', 'transition', 'sprint-racing']) {
+    expect(stages.some((scene) => scene.endsWith(stage))).toBe(true);
+  }
+  expect(stages.filter((scene) => scene.startsWith('ironman-card-'))).toEqual([
+    'ironman-card-swim',
+    'ironman-card-bike',
+    'ironman-card-t2',
+    'ironman-card-run',
+  ]);
+
+  await waitForScene(page, 'results', 40_000);
+  await page.waitForTimeout(800);
+  await page.screenshot({ path: 'screenshots/ironman-7-results.png' });
+  expect(errors).toEqual([]);
+});
+
+test('the ironman fits every viewport, with the athlete clear of the HUD', async ({ page }) => {
+  test.setTimeout(420_000);
+  const errors = collectErrors(page);
+  for (const viewport of [
+    { width: 375, height: 812 },
+    { width: 768, height: 1024 },
+    { width: 1440, height: 900 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await startSport(page, 3);
+    await waitForScene(page, 'ironman-swim-swim-swimming', 20_000);
+    await expectNoHorizontalOverflow(page);
+    const size = await page.locator('canvas.screen').evaluate((node) => {
+      const el = /** @type {HTMLCanvasElement} */ (node);
+      const box = el.getBoundingClientRect();
+      return { width: el.width, height: el.height, right: box.right, bottom: box.bottom };
+    });
+    expect(size.width % 320).toBe(0);
+    expect(size.width / 320).toBe(size.height / 180);
+    expect(size.right).toBeLessThanOrEqual(viewport.width);
+    expect(size.bottom).toBeLessThanOrEqual(viewport.height);
+    await page.screenshot({ path: `screenshots/ironman-swim-${viewport.width}.png` });
+
+    // The transition is the busiest screen: HUD band, prompt, bar and rack.
+    await playIronman(page, async (scene) => {
+      if (scene === 'ironman-t2-transition') {
+        await page.waitForTimeout(1500);
+        await page.screenshot({ path: `screenshots/ironman-t2-${viewport.width}.png` });
+      }
+      if (scene === 'ironman-run-sprint-racing') {
+        await page.waitForTimeout(1500);
+        await page.screenshot({ path: `screenshots/ironman-run-${viewport.width}.png` });
+      }
+      // The rest of the run is the 1280px test's job; this one only checks
+      // that every screen fits.
+    }, 'ironman-run-sprint-racing');
+    expect(await page.evaluate(() => window.scrollY)).toBe(0);
+  }
+  expect(errors).toEqual([]);
+});
