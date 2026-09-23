@@ -15,9 +15,14 @@ import { createSportSelectScene } from '../games/hub/sport-select-scene.js';
 import { createAthleteSelectScene } from '../games/hub/athlete-select-scene.js';
 import { createResultsScene } from '../games/hub/results-scene.js';
 import { mountRotateHint } from '../games/shared/rotate-hint.js';
+import { createAudio, useAudio } from '../engine/audio.js';
+import { mountSoundToggle } from '../games/shared/sound-toggle.js';
+import { keepFresh } from './offline.js';
 
 /** @typedef {import('../games/sports.js').Sport} Sport */
 /** @typedef {import('../data/athletes.js').Athlete} Athlete */
+
+keepFresh();
 
 const container = /** @type {HTMLElement} */ (document.getElementById('game'));
 const screen = createScreen(container);
@@ -25,11 +30,28 @@ mountRotateHint(container);
 const button = createButton();
 bindButton(button, container);
 const scores = createBestScores();
+// Sound is off until the switch in the corner is pressed.
+const audio = createAudio();
+useAudio(audio);
+mountSoundToggle(container, audio);
+
+/**
+ * Music plays over the menus and stops for a race, so the only thing you
+ * hear while racing is the race.
+ * @param {boolean} on
+ */
+const music = (on) => audio.music(on);
 
 const director = createDirector(createTitleScene({ onStart: () => director.go(sportSelect()) }));
+music(true);
 
 function sportSelect() {
-  return createSportSelectScene({ sports: SPORTS, onPick: (sport) => director.go(athleteSelect(sport)) });
+  music(true);
+  return createSportSelectScene({
+    sports: SPORTS,
+    best: (key) => scores.get(key),
+    onPick: (sport) => director.go(athleteSelect(sport)),
+  });
 }
 
 /**
@@ -37,6 +59,7 @@ function sportSelect() {
  * @param {string} [startId]
  */
 function athleteSelect(sport, startId) {
+  music(true);
   return createAthleteSelectScene({
     sport,
     athletes: athletesFor(sport.roster),
@@ -50,6 +73,7 @@ function athleteSelect(sport, startId) {
  * @param {Athlete} athlete
  */
 function race(sport, athlete) {
+  music(false);
   const seed = Date.now() % 2147483647;
   return sport.createScene({
     athlete,
@@ -57,6 +81,7 @@ function race(sport, athlete) {
     seed,
     onFinish: (outcome) => {
       const newBest = scores.submit(sport.key, { time: outcome.time, athleteId: athlete.id });
+      music(true);
       director.go(
         createResultsScene({
           sport,
@@ -92,6 +117,7 @@ function pickRivals(sport, athlete, seed) {
 
 startLoop({
   update(dt) {
+    audio.update();
     director.update(dt, button.poll());
     if (container.dataset.scene !== director.name) container.dataset.scene = director.name;
   },

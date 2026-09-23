@@ -9,6 +9,7 @@ import { createSideScene, SCENE } from '../shared/side-scene.js';
 import { createMenu } from '../shared/menu.js';
 import { drawPanel, drawMenuHint, menuHint } from '../shared/ui.js';
 import { PALETTE } from '../../assets/palette.js';
+import { sound } from '../../engine/audio.js';
 
 /** @typedef {import('../sports.js').Sport} Sport */
 /** @typedef {import('../sports.js').Outcome} Outcome */
@@ -43,7 +44,9 @@ export function createResultsScene({ sport, athlete, outcome, best, newBest, onR
     name: 'results',
     update(dt, button) {
       time += dt;
-      if (menu.update(dt, button) === 'select') actions[menu.index]();
+      const event = menu.update(dt, button);
+      if (event) sound.play(event === 'select' ? 'select' : 'move');
+      if (event === 'select') actions[menu.index]();
     },
     render(ctx) {
       scene.draw(ctx, 0);

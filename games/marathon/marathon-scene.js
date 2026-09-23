@@ -14,6 +14,7 @@ import { drawText, measureText } from '../../engine/font.js';
 import { damp } from '../../engine/math.js';
 import { formatClock, ordinal } from '../../engine/format.js';
 import { PALETTE } from '../../assets/palette.js';
+import { sound } from '../../engine/audio.js';
 
 /** @typedef {import('../../data/athletes.js').Athlete} Athlete */
 /** @typedef {import('../../engine/input.js').ButtonState} ButtonState */
@@ -93,6 +94,8 @@ export function createMarathonScene({ athlete, rivals, seed, onFinish }) {
       if (banner) banner.age += dt;
 
       if (state === 'countdown') {
+        // One beep per second of the countdown.
+        if (Math.floor(clock) > Math.floor(clock - dt)) sound.play('countdown');
         if (clock >= COUNTDOWN) {
           state = 'racing';
           self.name = 'marathon-racing';
@@ -104,6 +107,7 @@ export function createMarathonScene({ athlete, rivals, seed, onFinish }) {
             popup = { ...JUDGEMENTS[event.result], text: event.late ? 'TOO LATE' : JUDGEMENTS[event.result].text, age: 0 };
             streak = event.result === 'perfect' ? streak + 1 : 0;
             if (event.result === 'perfect') flash = 0.1;
+            sound.play(event.result);
           } else if (event.type === 'phase') {
             banner = { ...BANNERS[event.name], age: 0 };
           } else if (event.type === 'finish') {
@@ -112,6 +116,7 @@ export function createMarathonScene({ athlete, rivals, seed, onFinish }) {
             clock = 0;
             finalRows = finalStandings(race);
             banner = { text: 'FINISH!', color: PALETTE.yellow, age: 0 };
+            sound.play('finish');
           }
         }
       } else {

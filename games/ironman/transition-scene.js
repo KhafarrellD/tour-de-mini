@@ -11,6 +11,7 @@ import { cycleFrame } from '../../engine/animation.js';
 import { drawText } from '../../engine/font.js';
 import { PALETTE } from '../../assets/palette.js';
 import { createRng } from '../../engine/rng.js';
+import { sound } from '../../engine/audio.js';
 
 /** @typedef {import('../../data/athletes.js').Athlete} Athlete */
 /** @typedef {import('../../engine/input.js').ButtonState} ButtonState */
@@ -59,6 +60,7 @@ export function createTransitionScene({ athlete, rivals, seed, onFinish }) {
             const text = { perfect: 'SHARP!', good: 'OK', miss: 'FUMBLE!' }[event.result];
             const color = { perfect: PALETTE.yellow, good: PALETTE.white, miss: PALETTE.red }[event.result];
             popup = { text, color, age: 0 };
+            sound.play(event.result);
             if (event.result === 'perfect') flash = 0.12;
           }
         }

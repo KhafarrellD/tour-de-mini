@@ -9,6 +9,7 @@ import { createSideScene, SCENE } from '../shared/side-scene.js';
 import { createMenu } from '../shared/menu.js';
 import { drawPanel, drawStatBar, drawMenuHint, menuHint } from '../shared/ui.js';
 import { PALETTE } from '../../assets/palette.js';
+import { sound } from '../../engine/audio.js';
 
 /** @typedef {import('../../data/athletes.js').Athlete} Athlete */
 /** @typedef {import('../sports.js').Sport} Sport */
@@ -44,7 +45,9 @@ export function createAthleteSelectScene({ sport, athletes, startId, onPick }) {
     name: 'athlete-select',
     update(dt, button) {
       time += dt;
-      if (menu.update(dt, button) === 'select') onPick(athletes[menu.index]);
+      const event = menu.update(dt, button);
+      if (event) sound.play(event === 'select' ? 'select' : 'move');
+      if (event === 'select') onPick(athletes[menu.index]);
     },
     render(ctx) {
       scene.draw(ctx, 0);
@@ -68,7 +71,7 @@ export function createAthleteSelectScene({ sport, athletes, startId, onPick }) {
       athletes.forEach((entry, i) => {
         const x = Math.round(spacing * (i + 1));
         const active = i === menu.index;
-        drawText(ctx, shortName(entry), x, 100 + (i % 2) * 10, {
+        drawText(ctx, shortName(entry), x, 102 + (i % 2) * 10, {
           align: 'center',
           color: active ? PALETTE.yellow : PALETTE.white,
         });
@@ -77,7 +80,7 @@ export function createAthleteSelectScene({ sport, athletes, startId, onPick }) {
 
       // A bobbing arrow over the highlighted athlete's name.
       const x = Math.round(spacing * (menu.index + 1));
-      const arrowY = 96 + (menu.index % 2) * 10 - (Math.floor(time * 3) % 2);
+      const arrowY = 98 + (menu.index % 2) * 10 - (Math.floor(time * 3) % 2);
       ctx.fillStyle = PALETTE.outline;
       ctx.fillRect(x - 3, arrowY - 3, 7, 1);
       ctx.fillStyle = PALETTE.yellow;

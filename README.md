@@ -6,14 +6,14 @@ Canvas 2D API: no frameworks, no game engine, no build step.
 
 ![The marathon: the pack runs past the Alps while the player taps the pace bar on the beat](docs/media/marathon.gif)
 
-**Status:** all four events are playable — the Marathon, the Tour sprint, the
-descent and the Ironman — and every athlete sprite is done
-([sprite gallery](gallery.html)). Sound, the hub polish pass and deployment
-are next.
+**Status:** finished and deployed — four events, 22 athletes, chiptune sound
+and a mobile pass ([play it](https://khafarrelld.github.io/tour-de-mini/),
+[sprite gallery](gallery.html)).
 
 ## How to play
 
-Everything is played with one button: **Space**, **Enter**, or a **tap** anywhere.
+Everything is played with one button: **Space**, **Enter**, or a **tap** anywhere. Sound starts off:
+the speaker in the corner turns it on, or press **M**.
 
 - **Menus:** tap to move to the next option, hold to select it. A meter fills while you hold.
 - **Marathon:** 42.2 seconds, one per kilometre. A marker sweeps the pace bar once per km. Tap
@@ -48,19 +48,24 @@ npm run serve        # http://localhost:4173  (any static server works)
 npm test             # unit tests (Node's built-in test runner)
 npm run typecheck    # JSDoc types checked by TypeScript, no compilation
 npx playwright test  # loads every page at 375, 768 and 1440px wide, walks the hub into a
-                     # race, plays a full marathon and a full Ironman, fails on console
-                     # errors or overflow, and saves screenshots to screenshots/
+                     # race, plays a full marathon and a full Ironman, counts the voices
+                     # the sound engine synthesises, checks a stale deploy can't be served
+                     # and that the game runs offline, fails on console errors or overflow,
+                     # and saves screenshots to screenshots/
 ```
 
 ## How it works
 
 ```
 index.html, gallery.html   pages (the hub, and a gallery of every sprite)
+sw.js                      service worker: network first, so a deploy is never stale, and
+                           the game still runs with no connection
 pages/                     one small script per page; hub.js wires the scenes together
 engine/                    game-agnostic core, pure where possible
   loop.js                  fixed 60 Hz simulation, rendering on requestAnimationFrame
   screen.js                320x180 buffer, whole-pixel scaling, letterboxing
   input.js                 the single button: Space, Enter or a tap
+  audio.js                 chiptune synth: sounds written as notes, muted by default
   director.js              one scene at a time, with a pixel wipe between them
   grid.js                  pure operations on pixel grids (stamp, outline, shear...)
   character.js             builds athlete sprites from rigs + traits, cached
@@ -88,7 +93,15 @@ A few rules hold everywhere:
 - **Speed never depends on frame rate.** The simulation advances in fixed 1/60 s steps, and
   animation is driven by what the athlete is doing: legs follow cadence, wheels follow distance.
 - **One button.** Every game is playable with Space, Enter or a tap. The page never scrolls on
-  Space, including when the game is embedded in an iframe.
+  Space, including when the game is embedded in an iframe. The sound switch deliberately ignores
+  Space and Enter, so the button that plays the game never toggles sound by accident.
+- **Sound is synthesised, not loaded.** There are no audio files: `engine/audio.js` writes each
+  effect as notes and turns them into oscillators, so the whole soundtrack costs no bytes. It
+  starts muted, and no audio clock is created at all until someone turns it on.
+- **A phone held upright turns the picture, not the game.** Upright, a phone can only fit a small
+  16:9 frame; drawn sideways it fills the long side of the screen, which doubles every pixel.
+  The game itself is unchanged — the player just turns the phone, which works even with rotation
+  locked.
 - **Stages are shared, not copied.** The Ironman does not reimplement a bike race or a run: it
   builds the descent over a shorter course and the sprint over a shorter finish, and both take
   a distance. The sprint scene draws the same race either on bikes or on foot, so the run to

@@ -8,6 +8,7 @@ import { createSideScene, SCENE } from '../shared/side-scene.js';
 import { createMenu } from '../shared/menu.js';
 import { drawPanel, drawMenuHint, menuHint } from '../shared/ui.js';
 import { PALETTE } from '../../assets/palette.js';
+import { sound } from '../../engine/audio.js';
 
 /** @typedef {import('../sports.js').Sport} Sport */
 
@@ -21,10 +22,21 @@ const ROAD_HEIGHT = 20;
 export const TAGLINE_INSET = 12;
 
 /**
- * Lines of tagline that fit between the card's title and its preview road.
- * Cards are a fixed height, so this does not depend on how many there are.
+ * Lines of tagline that fit between the card's title and its preview road,
+ * keeping the last line for the best time. Cards are a fixed height, so
+ * this does not depend on how many there are.
  */
-export const TAGLINE_ROWS = Math.floor((CARD_HEIGHT - ROAD_HEIGHT - TAGLINE_TOP - 2) / LINE_HEIGHT);
+export const TAGLINE_ROWS = Math.floor((CARD_HEIGHT - ROAD_HEIGHT - TAGLINE_TOP - 2) / LINE_HEIGHT) - 1;
+
+/**
+ * A card's personal-best line. "PB" rather than "BEST" so the longest time
+ * a sport can produce still fits a narrow card.
+ * @param {Sport} sport
+ * @param {number} seconds
+ */
+export function bestLine(sport, seconds) {
+  return `PB ${sport.formatTime(seconds)}`;
+}
 
 /**
  * Cards share the width, shrinking as sports are added.
@@ -35,10 +47,11 @@ export function cardWidth(count) {
 }
 
 /**
- * @param {{ sports: readonly Sport[], onPick: (sport: Sport) => void }} options
+ * @param {{ sports: readonly Sport[], best?: (key: string) => { time: number } | null,
+ *   onPick: (sport: Sport) => void }} options
  * @returns {import('../../engine/director.js').Scene}
  */
-export function createSportSelectScene({ sports, onPick }) {
+export function createSportSelectScene({ sports, best = () => null, onPick }) {
   const scene = createSideScene();
   const menu = createMenu(sports.length);
   let time = 0;
@@ -47,7 +60,9 @@ export function createSportSelectScene({ sports, onPick }) {
     name: 'sport-select',
     update(dt, button) {
       time += dt;
-      if (menu.update(dt, button) === 'select') onPick(sports[menu.index]);
+      const event = menu.update(dt, button);
+      if (event) sound.play(event === 'select' ? 'select' : 'move');
+      if (event === 'select') onPick(sports[menu.index]);
     },
     render(ctx) {
       scene.draw(ctx, time * 12);
@@ -79,14 +94,27 @@ export function createSportSelectScene({ sports, onPick }) {
             color: PALETTE.lightGrey,
           });
         });
-        // A little stretch of road with the sport's first athlete in action.
+        // Your best, once you have one: the reason to come back to a card.
+        const record = best(sport.key);
+        if (record) {
+          drawText(ctx, bestLine(sport, record.time), x + width / 2, y + TAGLINE_TOP + TAGLINE_ROWS * LINE_HEIGHT, {
+            align: 'center',
+            color: PALETTE.volt,
+          });
+        }
+
+        // A little stretch of road (or water) with an athlete in action.
         const roadY = y + CARD_HEIGHT - ROAD_HEIGHT;
-        ctx.fillStyle = PALETTE.road;
-        ctx.fillRect(x + 1, roadY, width - 2, ROAD_HEIGHT - 1);
-        ctx.fillStyle = PALETTE.roadLine;
-        ctx.fillRect(x + 1, roadY, width - 2, 1);
         const [athlete] = athletesFor(sport.roster);
-        sport.drawAthlete(ctx, athlete, time, x + width / 2, roadY + 12, active);
+        if (sport.preview) {
+          sport.preview(ctx, athlete, time, { x: x + 1, y: roadY, width: width - 2, height: ROAD_HEIGHT - 1 }, active);
+        } else {
+          ctx.fillStyle = PALETTE.road;
+          ctx.fillRect(x + 1, roadY, width - 2, ROAD_HEIGHT - 1);
+          ctx.fillStyle = PALETTE.roadLine;
+          ctx.fillRect(x + 1, roadY, width - 2, 1);
+          sport.drawAthlete(ctx, athlete, time, x + width / 2, roadY + 12, active);
+        }
       });
 
       drawMenuHint(ctx, menuHint(sports.length), menu.holdProgress, SCENE.laneY + 8);

@@ -13,6 +13,7 @@ import { formatShort } from '../../engine/format.js';
 import { paintSky, hillTile } from '../../assets/scenery/countryside.js';
 import { createPixelCanvas } from '../../engine/screen.js';
 import { PALETTE } from '../../assets/palette.js';
+import { sound } from '../../engine/audio.js';
 
 /** @typedef {import('../../data/athletes.js').Athlete} Athlete */
 /** @typedef {import('../../engine/input.js').ButtonState} ButtonState */
@@ -74,11 +75,14 @@ export function createSwimScene({ athlete, rivals, seed, intro = true, onFinish 
           if (event.type === 'stroke') {
             splash(3);
             stroke += 1;
+            sound.play('splash');
           } else if (event.type === 'hit') {
             popup = { text: event.obstacle.type === 'buoy' ? 'BUOY!' : 'TRAFFIC!', age: 0 };
             flash = 0.18;
             splash(14);
+            sound.play('miss');
           } else if (event.type === 'finish') {
+            sound.play('stage');
             phase = 'done';
             self.name = 'swim-done';
             clock = 0;

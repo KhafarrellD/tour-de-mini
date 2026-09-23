@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fitScale, WIDTH, HEIGHT } from '../../engine/screen.js';
+import { fitScale, chooseFit, WIDTH, HEIGHT } from '../../engine/screen.js';
 
 test('the internal resolution is 320x180', () => {
   assert.equal(WIDTH, 320);
@@ -34,4 +34,36 @@ test('fractional device pixel ratios still land on whole device pixels', () => {
 
 test('a window smaller than the game still renders at 1x', () => {
   assert.equal(fitScale(200, 100, 1).scale, 1);
+});
+
+test('a phone held upright turns the game sideways to double its size', () => {
+  // Upright, a 375px phone can only manage 3 device pixels per game pixel.
+  // Turned, the same phone manages 6, so the picture is twice the size.
+  const fit = chooseFit(375, 812, 3);
+  assert.equal(fit.rotated, true);
+  assert.equal(fit.scale, 6);
+  assert.equal(fit.cssWidth, 640);
+  assert.equal(fit.cssHeight, 360);
+  // It still fits: turned, the long side of the frame lies along the screen.
+  assert.ok(fit.cssWidth <= 812);
+  assert.ok(fit.cssHeight <= 375);
+});
+
+test('a phone already turned is left alone', () => {
+  const fit = chooseFit(812, 375, 3);
+  assert.equal(fit.rotated, false);
+  assert.equal(fit.scale, 6);
+});
+
+test('desktops and tablets are never turned sideways', () => {
+  assert.equal(chooseFit(1440, 900, 1).rotated, false);
+  assert.equal(chooseFit(900, 1440, 1).rotated, false, 'a tall desktop window stays upright');
+  assert.equal(chooseFit(768, 1024, 2).rotated, false, 'a tablet in portrait stays upright');
+});
+
+test('turning the game is only worth it when it actually gains size', () => {
+  // A square-ish small window gains nothing by turning, so it should not.
+  const fit = chooseFit(400, 420, 2);
+  assert.equal(fit.rotated, false);
+  assert.equal(fit.scale, fitScale(400, 420, 2).scale);
 });

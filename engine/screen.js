@@ -32,6 +32,30 @@ export function fitScale(availableWidth, availableHeight, devicePixelRatio) {
   };
 }
 
+/** Screens narrower than this are phones, and may be turned sideways. */
+const PHONE_WIDTH = 600;
+
+/**
+ * How to fit the frame into a box, including turning it sideways.
+ *
+ * A phone held upright can only show a small 16:9 frame. Turning the frame
+ * 90 degrees fills the long side of the screen instead, which on a typical
+ * phone doubles every game pixel — so the game is drawn sideways and the
+ * player turns the phone, which works even when rotation is locked.
+ *
+ * @param {number} availableWidth CSS pixels
+ * @param {number} availableHeight CSS pixels
+ * @param {number} devicePixelRatio
+ * @returns {{ scale: number, cssWidth: number, cssHeight: number, rotated: boolean }}
+ */
+export function chooseFit(availableWidth, availableHeight, devicePixelRatio) {
+  const upright = fitScale(availableWidth, availableHeight, devicePixelRatio);
+  const portraitPhone = availableHeight > availableWidth && availableWidth < PHONE_WIDTH;
+  if (!portraitPhone) return { ...upright, rotated: false };
+  const turned = fitScale(availableHeight, availableWidth, devicePixelRatio);
+  return turned.scale > upright.scale ? { ...turned, rotated: true } : { ...upright, rotated: false };
+}
+
 /**
  * Creates a 2D context with smoothing off, so scaled drawing stays crisp.
  * @param {number} width
@@ -61,12 +85,18 @@ export function createScreen(container) {
   let scale = 1;
 
   function resize() {
-    const fit = fitScale(container.clientWidth, container.clientHeight, window.devicePixelRatio || 1);
+    const fit = chooseFit(container.clientWidth, container.clientHeight, window.devicePixelRatio || 1);
     scale = fit.scale;
     display.width = WIDTH * scale;
     display.height = HEIGHT * scale;
     display.style.width = `${fit.cssWidth}px`;
     display.style.height = `${fit.cssHeight}px`;
+    // Turned sideways on an upright phone: the page rotates the picture, the
+    // player rotates the phone. Nothing about the game itself changes.
+    // The turned frame is wider than the screen, and a grid refuses to
+    // centre a box that overflows, so it is centred by hand.
+    display.style.transform = fit.rotated ? 'translate(-50%, -50%) rotate(90deg)' : '';
+    container.classList.toggle('turned', fit.rotated);
     displayCtx.imageSmoothingEnabled = false;
   }
 

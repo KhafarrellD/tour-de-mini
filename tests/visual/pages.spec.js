@@ -383,3 +383,139 @@ test('the ironman fits every viewport, with the athlete clear of the HUD', async
   }
   expect(errors).toEqual([]);
 });
+
+/**
+ * Counts the voices the page synthesises, so sound can be verified without
+ * anyone listening: every effect and every note of music goes through
+ * createOscillator or createBufferSource.
+ * @param {import('@playwright/test').Page} page
+ */
+async function countVoices(page) {
+  await page.addInitScript(() => {
+    /** @type {any} */ (window).voices = 0;
+    const Ctor = window.AudioContext;
+    /** @type {any} */ (window).AudioContext = class extends Ctor {
+      createOscillator() {
+        /** @type {any} */ (window).voices++;
+        return super.createOscillator();
+      }
+      createBufferSource() {
+        /** @type {any} */ (window).voices++;
+        return super.createBufferSource();
+      }
+    };
+  });
+}
+
+/** @param {import('@playwright/test').Page} page */
+const voices = (page) => page.evaluate(() => /** @type {any} */ (window).voices);
+
+test('sound is off until asked for, and then it really makes sound', async ({ page }) => {
+  test.setTimeout(90_000);
+  const errors = collectErrors(page);
+  await countVoices(page);
+  await page.goto('/');
+  await waitForScene(page, 'title');
+  await page.waitForTimeout(600);
+
+  // Nothing is heard, and no audio clock is even started, until asked.
+  const toggle = page.locator('.sound-toggle');
+  await expect(toggle).toBeVisible();
+  await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+  expect(await voices(page)).toBe(0);
+
+  // Playing the game while muted stays silent.
+  await page.keyboard.press('Space');
+  await waitForScene(page, 'sport-select');
+  await page.waitForTimeout(300);
+  expect(await voices(page)).toBe(0);
+
+  // The switch turns it on, and the menus start making noise.
+  await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+  await page.waitForTimeout(400);
+  const afterToggle = await voices(page);
+  expect(afterToggle).toBeGreaterThan(0);
+
+  // Pressing the switch does not also count as a tap on the game.
+  expect(await page.locator('#game').getAttribute('data-scene')).toBe('sport-select');
+
+  // Moving along the menu is audible.
+  await page.keyboard.press('Space');
+  await page.waitForTimeout(300);
+  expect(await voices(page)).toBeGreaterThan(afterToggle);
+
+  // M turns it off again, and the choice survives a reload.
+  await page.keyboard.press('KeyM');
+  await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+  await page.reload();
+  await waitForScene(page, 'title');
+  await expect(page.locator('.sound-toggle')).toHaveAttribute('aria-pressed', 'false');
+  expect(errors).toEqual([]);
+});
+
+test('a race with the sound on plays effects and stops the menu music', async ({ page }) => {
+  test.setTimeout(120_000);
+  const errors = collectErrors(page);
+  await countVoices(page);
+  await page.goto('/');
+  await waitForScene(page, 'title');
+  await page.waitForTimeout(400);
+  await page.locator('.sound-toggle').click();
+  await expect(page.locator('.sound-toggle')).toHaveAttribute('aria-pressed', 'true');
+
+  await page.keyboard.press('Space');
+  await waitForScene(page, 'sport-select');
+  await page.waitForTimeout(400);
+  await hold(page);
+  await waitForScene(page, 'athlete-select');
+  await page.waitForTimeout(400);
+  await hold(page);
+  await waitForScene(page, 'marathon-racing', 20_000);
+  const atStart = await voices(page);
+  await tapOnTheBeat(page);
+  await page.waitForTimeout(6000);
+  // Judgements are heard: more voices than the music alone would queue.
+  expect(await voices(page)).toBeGreaterThan(atStart);
+  expect(errors).toEqual([]);
+});
+
+test('a deploy is never stale, and a second visit works offline', async ({ page, context }) => {
+  test.setTimeout(90_000);
+  const errors = collectErrors(page);
+
+  // A file that changes on the server between two requests. The worker sees
+  // both requests, so this shows which one it answers with.
+  let build = 'first build';
+  await context.route('**/build-probe.js', (route) =>
+    route.fulfill({ status: 200, contentType: 'text/javascript', body: `export const BUILD = '${build}';` }),
+  );
+
+  await page.goto('/');
+  await waitForScene(page, 'title');
+  // The worker takes over the page it was registered from.
+  await page.waitForFunction(() => navigator.serviceWorker.controller !== null, null, { timeout: 20_000 });
+
+  /** @param {import('@playwright/test').Page} p */
+  const probe = (p) => p.evaluate(async () => (await fetch('build-probe.js')).text());
+
+  expect(await probe(page)).toContain('first build');
+  // Now the server has a newer build. A cache-first worker would keep
+  // serving the old one; this one asks the network every time.
+  build = 'second build';
+  expect(await probe(page)).toContain('second build');
+
+  // Offline: the game still boots, from what the worker kept.
+  await page.reload();
+  await waitForScene(page, 'title');
+  await context.setOffline(true);
+  await page.reload();
+  await waitForScene(page, 'title', 20_000);
+  await expect(page.locator('canvas.screen')).toBeVisible();
+  await page.keyboard.press('Space');
+  await waitForScene(page, 'sport-select');
+  // And the last thing it saw is what it serves.
+  expect(await probe(page)).toContain('second build');
+  await context.setOffline(false);
+  expect(errors).toEqual([]);
+});

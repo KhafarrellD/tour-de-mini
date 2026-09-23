@@ -3,11 +3,12 @@
  * the menus, athlete select and results screens are shared.
  */
 import { formatClock, formatShort } from '../engine/format.js';
+import { PALETTE } from '../assets/palette.js';
 import { createMarathonScene } from './marathon/marathon-scene.js';
 import { createSprintScene } from './cycling/sprint-scene.js';
 import { createDescentScene } from './cycling/descent-scene.js';
 import { createIronmanScene } from './ironman/ironman-scene.js';
-import { drawRunner, drawRider, PEDAL_FRAMES } from '../engine/character.js';
+import { drawRunner, drawRider, drawSwimmer, PEDAL_FRAMES } from '../engine/character.js';
 import { cycleFrame } from '../engine/animation.js';
 
 /** @typedef {import('../data/athletes.js').Athlete} Athlete */
@@ -32,6 +33,10 @@ import { cycleFrame } from '../engine/animation.js';
  * @property {number} [rivalCount] how many rivals race, when not the whole roster
  * @property {(ctx: CanvasRenderingContext2D, athlete: Athlete, time: number, x: number, groundY: number, active: boolean) => void} drawAthlete
  *   an athlete in the menus; `active` when highlighted
+ * @property {(ctx: CanvasRenderingContext2D, athlete: Athlete, time: number,
+ *   box: { x: number, y: number, width: number, height: number }, active: boolean) => void} [preview]
+ *   the strip at the bottom of the sport's card, when a road is the wrong
+ *   place for it
  * @property {(options: { athlete: Athlete, rivals: Athlete[], seed: number, onFinish: (outcome: Outcome) => void }) => Scene} createScene
  */
 
@@ -96,6 +101,19 @@ export const SPORTS = [
       // reads as a body on the tarmac, not as a sport.
       const frame = active ? cycleFrame(time * 1.7, 6) : cycleFrame(time * 0.6, 2);
       drawRunner(ctx, athlete, 'run', active ? 'run' : 'idle', frame, x, groundY);
+    },
+    preview(ctx, athlete, time, box, active) {
+      // A lane of open water with the triathlete swimming across it.
+      ctx.fillStyle = PALETTE.water;
+      ctx.fillRect(box.x, box.y, box.width, box.height);
+      ctx.fillStyle = PALETTE.waterDeep;
+      ctx.fillRect(box.x, box.y + box.height - 5, box.width, 5);
+      const surface = box.y + 5;
+      ctx.fillStyle = PALETTE.foam;
+      for (let i = 0; i < box.width; i += 8) ctx.fillRect(box.x + ((i + Math.floor(time * 9)) % box.width), surface - 1, 4, 1);
+      ctx.fillStyle = PALETTE.waterLight;
+      for (let i = 3; i < box.width; i += 12) ctx.fillRect(box.x + ((i + Math.floor(time * 5)) % box.width), surface + 5, 3, 1);
+      drawSwimmer(ctx, athlete, active ? 'stroke' : 'idle', cycleFrame(time * (active ? 1.6 : 0.5), 4), box.x + box.width / 2, surface + 3);
     },
     createScene: createIronmanScene,
   },

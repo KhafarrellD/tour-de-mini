@@ -1,13 +1,14 @@
 /**
- * On a phone held upright the 320x180 frame can only scale 1x, so a small
- * pixel-font hint below it suggests turning the phone. CSS shows it only in
- * portrait; it lives outside the game frame and never covers play.
+ * On a phone held upright the frame is drawn sideways, so it fills the long
+ * side of the screen. This hint is drawn sideways with it and says why. CSS
+ * shows it only when the screen is turned; it lives outside the game frame
+ * and never covers play.
  */
 import { createPixelCanvas } from '../../engine/screen.js';
 import { drawText, measureText, LINE_HEIGHT } from '../../engine/font.js';
 import { PALETTE } from '../../assets/palette.js';
 
-const TEXT = 'ROTATE FOR A BIGGER VIEW';
+const TEXT = 'TURN YOUR PHONE';
 const SCALE = 2;
 
 /** @param {HTMLElement} container */

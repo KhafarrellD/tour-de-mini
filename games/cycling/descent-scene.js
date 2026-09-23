@@ -15,6 +15,7 @@ import { formatShort } from '../../engine/format.js';
 import { paintSky, mountainTile } from '../../assets/scenery/countryside.js';
 import { createPixelCanvas } from '../../engine/screen.js';
 import { PALETTE } from '../../assets/palette.js';
+import { sound } from '../../engine/audio.js';
 
 /** @typedef {import('../../data/athletes.js').Athlete} Athlete */
 /** @typedef {import('../sports.js').Outcome} Outcome */
@@ -83,16 +84,19 @@ export function createDescentScene({ athlete, rivals, seed, metres, intro = true
           if (event.type === 'wobble') {
             popup = { text: 'WOBBLE!', color: PALETTE.orange, age: 0 };
             shake = 0.12;
+            sound.play('miss');
             spray(10);
           } else if (event.type === 'crash') {
             popup = { text: 'CRASH!', color: PALETTE.red, age: 0 };
             shake = 0.45;
+            sound.play('crash');
             spray(40);
           } else if (event.type === 'finish') {
             phase = 'finished';
             self.name = 'descent-finished';
             clock = 0;
             finalRows = descentStandings(state);
+            sound.play('finish');
           }
         }
         if (braking && state.speed > 9 && rng.next() < 0.3) spray(1);

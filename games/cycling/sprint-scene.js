@@ -19,6 +19,7 @@ import { damp } from '../../engine/math.js';
 import { ordinal } from '../../engine/format.js';
 import { PALETTE } from '../../assets/palette.js';
 import { WHEEL } from '../../assets/sprites/bike.js';
+import { sound } from '../../engine/audio.js';
 
 /** @typedef {import('../../data/athletes.js').Athlete} Athlete */
 /** @typedef {import('../sports.js').Outcome} Outcome */
@@ -102,6 +103,7 @@ export function createSprintScene({ athlete, rivals, seed, metres, attackPoints,
           if (event.type === 'window') {
             banner = { text: `${event.at} M TO GO`, color: PALETTE.white, age: 0 };
           } else if (event.type === 'attack') {
+            sound.play(event.result);
             if (event.result === 'perfect') {
               popup = { text: 'PERFECT ATTACK!', color: PALETTE.yellow, age: 0 };
               flash = 0.12;
@@ -112,12 +114,14 @@ export function createSprintScene({ athlete, rivals, seed, metres, attackPoints,
             }
           } else if (event.type === 'empty') {
             popup = { text: 'LEGS GONE!', color: PALETTE.red, age: 0 };
+            sound.play('miss');
           } else if (event.type === 'finish') {
             phase = 'finished';
             self.name = 'sprint-finished';
             clock = 0;
             finalRows = sprintStandings(state);
             banner = { text: 'FINISH!', color: PALETTE.yellow, age: 0 };
+            sound.play('finish');
           }
         }
       } else {

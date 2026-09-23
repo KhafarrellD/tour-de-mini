@@ -14,6 +14,7 @@ import { drawText, measureText } from '../../engine/font.js';
 import { formatShort, ordinal } from '../../engine/format.js';
 import { drawPanel } from '../shared/ui.js';
 import { PALETTE } from '../../assets/palette.js';
+import { sound } from '../../engine/audio.js';
 
 /** @typedef {import('../../data/athletes.js').Athlete} Athlete */
 /** @typedef {import('../sports.js').Outcome} Outcome */
@@ -70,6 +71,7 @@ export function createIronmanScene({ athlete, rivals, seed, onFinish }) {
    */
   function finishStage(name, results) {
     recordStage(race, name, results);
+    if (name !== 'SWIM') sound.play('stage');
     const mine = results.find((row) => row.isPlayer);
     card = { stage: name, time: mine?.time ?? 0, age: 0 };
   }

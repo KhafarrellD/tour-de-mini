@@ -8,6 +8,7 @@ import { athletesFor } from '../../data/athletes.js';
 import { createSideScene, SCENE } from '../shared/side-scene.js';
 import { PALETTE } from '../../assets/palette.js';
 import { WHEEL } from '../../assets/sprites/bike.js';
+import { sound } from '../../engine/audio.js';
 
 const BUNCH_SPEED = 56;
 const CADENCE = 1.5;
@@ -34,7 +35,10 @@ export function createTitleScene({ onStart }) {
     update(dt, button) {
       time += dt;
       for (const rider of riders) rider.crank += CADENCE * dt;
-      if (button.pressed) onStart();
+      if (button.pressed) {
+        sound.play('select');
+        onStart();
+      }
     },
     render(ctx) {
       const distance = time * BUNCH_SPEED;

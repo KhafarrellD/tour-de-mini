@@ -14,6 +14,7 @@ body {
   inset: 0;
   display: grid;
   place-items: center;
+  overflow: hidden;
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
@@ -27,18 +28,47 @@ body {
   image-rendering: crisp-edges;
 }
 
+/* Turned sideways, the frame is taken out of the grid's hands and centred
+   on the screen itself, because it is wider than the screen it sits on. */
+.game.turned .screen {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+}
+
 .rotate-hint {
   display: none;
   position: absolute;
-  bottom: max(24px, env(safe-area-inset-bottom));
-  left: 50%;
-  transform: translateX(-50%);
   image-rendering: pixelated;
   pointer-events: none;
 }
 
-@media (orientation: portrait) and (max-width: 600px) {
-  .rotate-hint {
-    display: block;
-  }
+/* The hint stays upright: it is the one thing meant to be read before the
+   phone is turned. It sits in the band above the turned frame. */
+.game.turned .rotate-hint {
+  display: block;
+  top: max(16px, env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.sound-toggle {
+  position: absolute;
+  top: max(8px, env(safe-area-inset-top));
+  right: max(8px, env(safe-area-inset-right));
+  padding: 4px;
+  border: 0;
+  border-radius: 4px;
+  background: #241c33cc;
+  line-height: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.sound-toggle canvas {
+  image-rendering: pixelated;
+}
+
+.sound-toggle:focus-visible {
+  outline: 2px solid #f2c94c;
 }
