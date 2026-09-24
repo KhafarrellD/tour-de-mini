@@ -7,7 +7,7 @@ Canvas 2D API: no frameworks, no game engine, no build step.
 ![The marathon: the pack runs past the Alps while the player taps the pace bar on the beat](docs/media/marathon.gif)
 
 **Status:** finished and deployed — four events, 22 athletes, chiptune sound
-and a mobile pass ([play it](https://khafarrelld.github.io/tour-de-mini/),
+and a mobile pass ([play it](https://khafarrelld.github.io/pixel-endurance/),
 [sprite gallery](gallery.html)).
 
 ## How to play
