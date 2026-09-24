@@ -1,7 +1,7 @@
-# Tour de Mini
+# Pixel Endurance
 
-A pixel-art sports minigame hub: a Tour de France sprint and descent, a 42.2-second marathon and an
-Ironman, featuring 22 real athletes drawn as 16–32px sprites. Built with vanilla JavaScript and the
+A pixel-art endurance sports game: a Tour de France sprint and descent, a 42.2-second marathon and
+an Ironman, featuring 22 real athletes drawn as 16–32px sprites. Built with vanilla JavaScript and the
 Canvas 2D API: no frameworks, no game engine, no build step.
 
 ![The marathon: the pack runs past the Alps while the player taps the pace bar on the beat](docs/media/marathon.gif)

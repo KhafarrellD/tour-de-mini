@@ -10,7 +10,7 @@
  * This file runs in the service worker scope, not the page, so it is not
  * part of the page's typecheck; keep it small and plain.
  */
-const CACHE = 'tour-de-mini-v1';
+const CACHE = 'pixel-endurance-v1';
 
 self.addEventListener('install', () => {
   // Take over as soon as this version is ready; there is nothing to migrate.

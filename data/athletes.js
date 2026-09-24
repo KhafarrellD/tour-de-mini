@@ -88,7 +88,7 @@ const TRI_KIT = { ...RUNNING_KIT, sleeves: 'white', legs: 'bib' };
 
 /** @type {Athlete[]} */
 export const ATHLETES = [
-  // ── Tour de Mini France ────────────────────────────────────────────
+  // ── The Tour ───────────────────────────────────────────────────────
   {
     id: 'pogacar',
     name: 'Tadej Pogačar',

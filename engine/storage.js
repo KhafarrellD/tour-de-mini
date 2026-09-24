@@ -4,6 +4,8 @@
  * and results fall back to memory for the session.
  */
 
+// The key keeps the game's old name: renaming it would drop every best
+// time already saved in a player's browser.
 const KEY = 'tour-de-mini:best';
 
 /**

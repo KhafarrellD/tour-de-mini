@@ -9,7 +9,7 @@ the game. Kit colors were checked against 2026-season coverage in September 2026
 choices below were confirmed by the project owner on 2026-09-22. Anything marked **estimate** is
 unconfirmed.
 
-## Cycling (Tour de Mini France)
+## Cycling (the Tour)
 
 Heights are from ProCyclingStats / Wikipedia.
 

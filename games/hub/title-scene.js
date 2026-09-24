@@ -43,8 +43,8 @@ export function createTitleScene({ onStart }) {
     render(ctx) {
       const distance = time * BUNCH_SPEED;
       scene.draw(ctx, distance);
-      drawText(ctx, 'TOUR DE MINI', 160, 26, { align: 'center', scale: 3, color: PALETTE.yellow });
-      drawText(ctx, 'A PIXEL SPORTS HUB', 160, 58, { align: 'center' });
+      drawText(ctx, 'PIXEL ENDURANCE', 160, 26, { align: 'center', scale: 3, color: PALETTE.yellow });
+      drawText(ctx, 'MARATHON - TOUR - IRONMAN', 160, 58, { align: 'center' });
       if (Math.floor(time * 1.6) % 2 === 0) {
         drawText(ctx, 'PRESS SPACE OR TAP TO START', 160, 78, { align: 'center', color: PALETTE.skyHaze });
       }

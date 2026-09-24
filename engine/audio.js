@@ -9,6 +9,8 @@
  * and a portfolio page that makes noise by itself is rude.
  */
 
+// Named for the game as it was: renaming the key would forget whether a
+// returning player had turned sound on.
 const KEY = 'tour-de-mini:muted';
 /** Semitones above C, for the note names used below. */
 const SEMITONES = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };

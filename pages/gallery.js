@@ -355,11 +355,11 @@ let time = 0;
 const main = /** @type {HTMLElement} */ (document.querySelector('main'));
 main.append(
   el('header', 'page-header', [
-    textCanvas('Tour de Mini', { scale: 4, color: PALETTE.yellow }),
+    textCanvas('Pixel Endurance', { scale: 4, color: PALETTE.yellow }),
     textCanvas('Sprite gallery: every athlete at 1x and enlarged', { scale: 2, color: PALETTE.lightGrey, maxWidth: 160 }),
   ]),
   scaleCheck(),
-  section('Tour de Mini France', athletesFor('cycling').map(athleteCard)),
+  section('The Tour', athletesFor('cycling').map(athleteCard)),
   section('Marathon', athletesFor('marathon').map(athleteCard)),
   section('Ironman', athletesFor('ironman').map(athleteCard)),
   section('Equipment', [bikeCard()]),
